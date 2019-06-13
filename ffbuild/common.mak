@@ -1,9 +1,9 @@
 #
 # common bits used by all libraries
 #
-
+#
 DEFAULT_X86ASMD=.dbg
-
+#
 ifeq ($(DBG),1)
 X86ASMD=$(DEFAULT_X86ASMD)
 else

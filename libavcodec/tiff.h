@@ -174,7 +174,7 @@ enum TiffGeoTagType {
     GEOTIFF_DOUBLE = 34736,
     GEOTIFF_STRING = 34737
 };
-
+/**TIFF文件的ED对象 */
 typedef struct TiffGeoTag {
     enum TiffGeoTagKey key;
     enum TiffTags type;

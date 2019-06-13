@@ -1,6 +1,6 @@
 MAIN_MAKEFILE=1
 include ffbuild/config.mak
-
+#指定文件的路径
 vpath %.c    $(SRC_PATH)
 vpath %.cpp  $(SRC_PATH)
 vpath %.h    $(SRC_PATH)
@@ -14,8 +14,9 @@ vpath %.texi $(SRC_PATH)
 vpath %.cu   $(SRC_PATH)
 vpath %.ptx  $(SRC_PATH)
 vpath %/fate_config.sh.template $(SRC_PATH)
-
+#设置测试工具
 TESTTOOLS   = audiogen videogen rotozoom tiny_psnr tiny_ssim base64 audiomatch
+#
 HOSTPROGS  := $(TESTTOOLS:%=tests/%) doc/print_options
 
 # $(FFLIBS-yes) needs to be in linking order
@@ -28,15 +29,18 @@ FFLIBS-$(CONFIG_POSTPROC)   += postproc
 FFLIBS-$(CONFIG_SWRESAMPLE) += swresample
 FFLIBS-$(CONFIG_SWSCALE)    += swscale
 
+#
 FFLIBS := avutil
 
 DATA_FILES := $(wildcard $(SRC_PATH)/presets/*.ffpreset) $(SRC_PATH)/doc/ffprobe.xsd
 
+#
 SKIPHEADERS = compat/w32pthreads.h
 
 # first so "all" becomes default target
 all: all-yes
 
+#引入文件
 include $(SRC_PATH)/tools/Makefile
 include $(SRC_PATH)/ffbuild/common.mak
 

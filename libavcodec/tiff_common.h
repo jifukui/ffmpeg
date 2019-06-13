@@ -34,6 +34,7 @@
 #include "libavutil/bprint.h"
 
 /** data type identifiers for TIFF tags */
+/**TIFF的数据类型 */
 enum TiffTypes {
     TIFF_BYTE = 1,
     TIFF_STRING,
@@ -51,6 +52,7 @@ enum TiffTypes {
 };
 
 /** sizes of various TIFF field types (string size = 100)*/
+/**TIFF数据类型占用的字节数量 */
 static const uint8_t type_sizes[14] = {
     0, 1, 100, 2, 4, 8, 1, 1, 2, 4, 8, 4, 8, 4
 };

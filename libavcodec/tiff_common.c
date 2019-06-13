@@ -27,25 +27,29 @@
 
 #include "tiff_common.h"
 
-
+/**传入tiff标签的值在FF_ARRAY_ELEMS数组中寻找此值对于找到的返回非0整数对于没有找到的返回0
+ * 此函数的作用是判断传入的tag的值是否有效
+ */
 int ff_tis_ifd(unsigned tag)
 {
     int i;
-    for (i = 0; i < FF_ARRAY_ELEMS(ifd_tags); i++) {
-        if (ifd_tags[i] == tag) {
+    for (i = 0; i < FF_ARRAY_ELEMS(ifd_tags); i++) 
+    {
+        if (ifd_tags[i] == tag) 
+        {
             return i + 1;
         }
     }
     return 0;
 }
 
-
+/**根据大小端状态标记获取2个字节的数据 */
 unsigned ff_tget_short(GetByteContext *gb, int le)
 {
     return le ? bytestream2_get_le16(gb) : bytestream2_get_be16(gb);
 }
 
-
+/**获取4个字节的数据 */
 unsigned ff_tget_long(GetByteContext *gb, int le)
 {
     return le ? bytestream2_get_le32(gb) : bytestream2_get_be32(gb);
@@ -58,10 +62,11 @@ double ff_tget_double(GetByteContext *gb, int le)
     return i.f64;
 }
 
-
+/**根据传入数据的类型获取响应数据 */
 unsigned ff_tget(GetByteContext *gb, int type, int le)
 {
-    switch (type) {
+    switch (type) 
+    {
     case TIFF_BYTE:  return bytestream2_get_byte(gb);
     case TIFF_SHORT: return ff_tget_short(gb, le);
     case TIFF_LONG:  return ff_tget_long(gb, le);
@@ -72,15 +77,20 @@ unsigned ff_tget(GetByteContext *gb, int type, int le)
 static const char *auto_sep(int count, const char *sep, int i, int columns)
 {
     if (sep)
+    {
         return i ? sep : "";
-    if (i && i%columns) {
+    }
+    if (i && i%columns) 
+    {
         return ", ";
-    } else
+    } 
+    else
+    {
         return columns < count ? "\n" : "";
+    }
 }
 
-int ff_tadd_rational_metadata(int count, const char *name, const char *sep,
-                              GetByteContext *gb, int le, AVDictionary **metadata)
+int ff_tadd_rational_metadata(int count, const char *name, const char *sep,GetByteContext *gb, int le, AVDictionary **metadata)
 {
     AVBPrint bp;
     char *ap;
@@ -88,22 +98,29 @@ int ff_tadd_rational_metadata(int count, const char *name, const char *sep,
     int i;
 
     if (count >= INT_MAX / sizeof(int64_t) || count <= 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
     if (bytestream2_get_bytes_left(gb) < count * sizeof(int64_t))
+    {
         return AVERROR_INVALIDDATA;
+    }
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) 
+    {
         nom   = ff_tget_long(gb, le);
         denom = ff_tget_long(gb, le);
         av_bprintf(&bp, "%s%7"PRId32":%-7"PRId32, auto_sep(count, sep, i, 4), nom, denom);
     }
 
-    if ((i = av_bprint_finalize(&bp, &ap))) {
+    if ((i = av_bprint_finalize(&bp, &ap))) 
+    {
         return i;
     }
-    if (!ap) {
+    if (!ap) 
+    {
         return AVERROR(ENOMEM);
     }
 
@@ -121,20 +138,27 @@ int ff_tadd_long_metadata(int count, const char *name, const char *sep,
     int i;
 
     if (count >= INT_MAX / sizeof(int32_t) || count <= 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
     if (bytestream2_get_bytes_left(gb) < count * sizeof(int32_t))
+    {
         return AVERROR_INVALIDDATA;
+    }
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) 
+    {
         av_bprintf(&bp, "%s%7i", auto_sep(count, sep, i, 8), ff_tget_long(gb, le));
     }
 
-    if ((i = av_bprint_finalize(&bp, &ap))) {
+    if ((i = av_bprint_finalize(&bp, &ap))) 
+    {
         return i;
     }
-    if (!ap) {
+    if (!ap) 
+    {
         return AVERROR(ENOMEM);
     }
 
@@ -152,20 +176,27 @@ int ff_tadd_doubles_metadata(int count, const char *name, const char *sep,
     int i;
 
     if (count >= INT_MAX / sizeof(int64_t) || count <= 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
     if (bytestream2_get_bytes_left(gb) < count * sizeof(int64_t))
+    {
         return AVERROR_INVALIDDATA;
+    }
 
     av_bprint_init(&bp, 10 * count, 100 * count);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) 
+    {
         av_bprintf(&bp, "%s%.15g", auto_sep(count, sep, i, 4), ff_tget_double(gb, le));
     }
 
-    if ((i = av_bprint_finalize(&bp, &ap))) {
+    if ((i = av_bprint_finalize(&bp, &ap))) 
+    {
         return i;
     }
-    if (!ap) {
+    if (!ap) 
+    {
         return AVERROR(ENOMEM);
     }
 
@@ -175,29 +206,35 @@ int ff_tadd_doubles_metadata(int count, const char *name, const char *sep,
 }
 
 
-int ff_tadd_shorts_metadata(int count, const char *name, const char *sep,
-                            GetByteContext *gb, int le, int is_signed, AVDictionary **metadata)
+int ff_tadd_shorts_metadata(int count, const char *name, const char *sep,GetByteContext *gb, int le, int is_signed, AVDictionary **metadata)
 {
     AVBPrint bp;
     char *ap;
     int i;
 
     if (count >= INT_MAX / sizeof(int16_t) || count <= 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
     if (bytestream2_get_bytes_left(gb) < count * sizeof(int16_t))
+    {
         return AVERROR_INVALIDDATA;
+    }
 
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) 
+    {
         int v = is_signed ? (int16_t)ff_tget_short(gb, le) :  ff_tget_short(gb, le);
         av_bprintf(&bp, "%s%5i", auto_sep(count, sep, i, 8), v);
     }
 
-    if ((i = av_bprint_finalize(&bp, &ap))) {
+    if ((i = av_bprint_finalize(&bp, &ap))) 
+    {
         return i;
     }
-    if (!ap) {
+    if (!ap) 
+    {
         return AVERROR(ENOMEM);
     }
 
@@ -207,29 +244,35 @@ int ff_tadd_shorts_metadata(int count, const char *name, const char *sep,
 }
 
 
-int ff_tadd_bytes_metadata(int count, const char *name, const char *sep,
-                           GetByteContext *gb, int le, int is_signed, AVDictionary **metadata)
+int ff_tadd_bytes_metadata(int count, const char *name, const char *sep,GetByteContext *gb, int le, int is_signed, AVDictionary **metadata)
 {
     AVBPrint bp;
     char *ap;
     int i;
 
     if (count >= INT_MAX / sizeof(int8_t) || count < 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
     if (bytestream2_get_bytes_left(gb) < count * sizeof(int8_t))
+    {
         return AVERROR_INVALIDDATA;
 
+    }
     av_bprint_init(&bp, 10 * count, AV_BPRINT_SIZE_UNLIMITED);
 
-    for (i = 0; i < count; i++) {
+    for (i = 0; i < count; i++) 
+    {
         int v = is_signed ? (int8_t)bytestream2_get_byte(gb) :  bytestream2_get_byte(gb);
         av_bprintf(&bp, "%s%3i", auto_sep(count, sep, i, 16), v);
     }
 
-    if ((i = av_bprint_finalize(&bp, &ap))) {
+    if ((i = av_bprint_finalize(&bp, &ap))) 
+    {
         return i;
     }
-    if (!ap) {
+    if (!ap) 
+    {
         return AVERROR(ENOMEM);
     }
 
@@ -238,17 +281,20 @@ int ff_tadd_bytes_metadata(int count, const char *name, const char *sep,
     return 0;
 }
 
-int ff_tadd_string_metadata(int count, const char *name,
-                            GetByteContext *gb, int le, AVDictionary **metadata)
+int ff_tadd_string_metadata(int count, const char *name,GetByteContext *gb, int le, AVDictionary **metadata)
 {
     char *value;
 
     if (bytestream2_get_bytes_left(gb) < count || count < 0)
+    {
         return AVERROR_INVALIDDATA;
+    }
 
     value = av_malloc(count + 1);
     if (!value)
+    {
         return AVERROR(ENOMEM);
+    }
 
     bytestream2_get_bufferu(gb, value, count);
     value[count] = 0;
@@ -257,40 +303,64 @@ int ff_tadd_string_metadata(int count, const char *name,
     return 0;
 }
 
-
+/**解析TIFF文件头
+ * 获取字节流的大小端
+ * 协议版本
+ * 和IFD的偏移位置
+ * gb：为字节流
+ * le:为大小端的标志
+ * ifd_offset：为IFD的偏移位置
+ * 返回0表示成功
+ */
 int ff_tdecode_header(GetByteContext *gb, int *le, int *ifd_offset)
 {
-    if (bytestream2_get_bytes_left(gb) < 8) {
+    if (bytestream2_get_bytes_left(gb) < 8) 
+    {
         return AVERROR_INVALIDDATA;
     }
-
+    /**获取文件头的字节顺序标志 */
     *le = bytestream2_get_le16u(gb);
-    if (*le == AV_RB16("II")) {
+    if (*le == AV_RB16("II")) 
+    {
         *le = 1;
-    } else if (*le == AV_RB16("MM")) {
+    } 
+    else if (*le == AV_RB16("MM")) 
+    {
         *le = 0;
-    } else {
+    } 
+    else 
+    {
         return AVERROR_INVALIDDATA;
     }
-
-    if (ff_tget_short(gb, *le) != 42) {
+    /**获取协议的版本对于不是42的返回失败 */
+    if (ff_tget_short(gb, *le) != 42) 
+    {
         return AVERROR_INVALIDDATA;
     }
-
+    /**获取IFD相对于文件的偏移位置 */
     *ifd_offset = ff_tget_long(gb, *le);
 
     return 0;
 }
 
-
-int ff_tread_tag(GetByteContext *gb, int le, unsigned *tag, unsigned *type,
-                 unsigned *count, int *next)
+/** 
+ * gb：字节流对象
+ * le：
+ * tag：标签值
+ * type：数据类型值
+ * count：数据数量
+ * next：
+ * 返回0表示成功
+*/
+int ff_tread_tag(GetByteContext *gb, int le, unsigned *tag, unsigned *type,unsigned *count, int *next)
 {
     int ifd_tag;
     int valid_type;
-
+    /**获取标签的值 */
     *tag    = ff_tget_short(gb, le);
+    /**获取数据类型的值 */
     *type   = ff_tget_short(gb, le);
+    /**获取数据数量的值 */
     *count  = ff_tget_long (gb, le);
 
     ifd_tag    = ff_tis_ifd(*tag);
@@ -299,13 +369,15 @@ int ff_tread_tag(GetByteContext *gb, int le, unsigned *tag, unsigned *type,
     *next = bytestream2_tell(gb) + 4;
 
     // check for valid type
-    if (!valid_type) {
+    if (!valid_type) 
+    {
         return AVERROR_INVALIDDATA;
     }
 
     // seek to offset if this is an IFD-tag or
     // if count values do not fit into the offset value
-    if (ifd_tag || (*count > 4 || !(type_sizes[*type] * (*count) <= 4 || *type == TIFF_STRING))) {
+    if (ifd_tag || (*count > 4 || !(type_sizes[*type] * (*count) <= 4 || *type == TIFF_STRING))) 
+    {
         bytestream2_seek(gb, ff_tget_long (gb, le), SEEK_SET);
     }
 

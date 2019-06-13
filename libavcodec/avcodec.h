@@ -212,6 +212,7 @@
  * After adding new codec IDs, do not forget to add an entry to the codec
  * descriptor list and bump libavcodec minor version.
  */
+/**编解码器枚举 */
 enum AVCodecID {
     AV_CODEC_ID_NONE,
 
@@ -1449,6 +1450,10 @@ typedef struct AVPacketSideData {
  *
  * @see av_packet_ref
  * @see av_packet_unref
+ */
+/**音视频包
+ * buf：
+ * 
  */
 typedef struct AVPacket {
     /**

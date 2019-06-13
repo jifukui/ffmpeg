@@ -52,17 +52,19 @@
 typedef struct TiffContext {
     AVClass *class;
     AVCodecContext *avctx;
-    GetByteContext gb;
+    GetByteContext gb;          //字节流对象
 
     int get_subimage;
     uint16_t get_page;
 
-    int width, height;
-    unsigned int bpp, bppcount;
+    int width;
+    int height;
+    unsigned int bpp;           //每个样本占用的bit数
+    unsigned int bppcount;      //每像素的样本数量
     uint32_t palette[256];
     int palette_is_set;
-    int le;
-    enum TiffCompr compr;
+    int le;                     //大小端状态默认为小端0，大端为1
+    enum TiffCompr compr;          //压缩类型
     enum TiffPhotometric photometric;
     int planar;
     int subsampling[2];
@@ -78,9 +80,14 @@ typedef struct TiffContext {
     uint32_t sub_ifd;
     uint16_t cur_page;
 
-    int strips, rps, sstype;
+    int strips;
+    int rps;
+    int sstype;
     int sot;
-    int stripsizesoff, stripsize, stripoff, strippos;
+    int stripsizesoff;
+    int stripsize;
+    int stripoff;
+    int strippos;
     LZWState *lzw;
 
     uint8_t *deinvert_buf;
@@ -90,16 +97,20 @@ typedef struct TiffContext {
     uint8_t *fax_buffer;
     unsigned int fax_buffer_size;
 
-    int geotag_count;
-    TiffGeoTag *geotags;
+    int geotag_count;               //目录实例对象的数量
+    TiffGeoTag *geotags;            //目录实例对象
 } TiffContext;
 
+/** */
 static void free_geotags(TiffContext *const s)
 {
     int i;
-    for (i = 0; i < s->geotag_count; i++) {
+    for (i = 0; i < s->geotag_count; i++) 
+    {
         if (s->geotags[i].val)
-            av_freep(&s->geotags[i].val);
+        {
+             av_freep(&s->geotags[i].val);
+        }
     }
     av_freep(&s->geotags);
     s->geotag_count = 0;
@@ -139,7 +150,9 @@ static const char *search_keyval(const TiffGeoTagKeyName *keys, int n, int id)
 {
     TiffGeoTagKeyName *r = bsearch(&id, keys, n, sizeof(keys[0]), cmp_id_key);
     if(r)
+    {
         return r->name;
+    }
 
     return NULL;
 }
@@ -517,26 +530,26 @@ static int tiff_unpack_fax(TiffContext *s, uint8_t *dst, int stride,
         }
     return ret;
 }
-
-static int tiff_unpack_strip(TiffContext *s, AVFrame *p, uint8_t *dst, int stride,
-                             const uint8_t *src, int size, int strip_start, int lines)
+/** */
+static int tiff_unpack_strip(TiffContext *s, AVFrame *p, uint8_t *dst, int stride,const uint8_t *src, int size, int strip_start, int lines)
 {
     PutByteContext pb;
     int c, line, pixels, code, ret;
     const uint8_t *ssrc = src;
     int width = ((s->width * s->bpp) + 7) >> 3;
     const AVPixFmtDescriptor *desc = av_pix_fmt_desc_get(p->format);
-    int is_yuv = !(desc->flags & AV_PIX_FMT_FLAG_RGB) &&
-                 (desc->flags & AV_PIX_FMT_FLAG_PLANAR) &&
-                 desc->nb_components >= 3;
+    int is_yuv = !(desc->flags & AV_PIX_FMT_FLAG_RGB) &&(desc->flags & AV_PIX_FMT_FLAG_PLANAR) &&desc->nb_components >= 3;
 
     if (s->planar)
-        width /= s->bppcount;
+    {
+         width /= s->bppcount;
+    }
 
     if (size <= 0)
         return AVERROR_INVALIDDATA;
 
-    if (is_yuv) {
+    if (is_yuv) 
+    {
         int bytes_per_row = (((s->width - 1) / s->subsampling[0] + 1) * s->bpp *
                             s->subsampling[0] * s->subsampling[1] + 7) >> 3;
         av_fast_padded_malloc(&s->yuv_line, &s->yuv_line_size, bytes_per_row);
@@ -686,24 +699,30 @@ static int tiff_unpack_strip(TiffContext *s, AVFrame *p, uint8_t *dst, int strid
                     pixels += code;
                 }
             }
-            if (s->fill_order) {
+            if (s->fill_order) 
+            {
                 int i;
                 for (i = 0; i < width; i++)
+                {
                     dst[i] = ff_reverse[dst[i]];
+                }
             }
             break;
         }
-        if (is_yuv) {
+        if (is_yuv) 
+        {
             unpack_yuv(s, p, dst, strip_start + line);
             line += s->subsampling[1] - 1;
-        } else if (p->format == AV_PIX_FMT_GRAY12) {
+        } 
+        else if (p->format == AV_PIX_FMT_GRAY12) 
+        {
             unpack_gray(s, p, dst, strip_start + line, width, s->bpp);
         }
         dst += stride;
     }
     return 0;
 }
-
+/** */
 static int init_image(TiffContext *s, ThreadFrame *frame)
 {
     int ret;
@@ -893,42 +912,57 @@ static int init_image(TiffContext *s, ThreadFrame *frame)
     }
     return 0;
 }
-
+/** */
 static void set_sar(TiffContext *s, unsigned tag, unsigned num, unsigned den)
 {
+    /**根据tar的值是否为283进行处理 */
     int offset = tag == TIFF_YRES ? 2 : 0;
     s->res[offset++] = num;
     s->res[offset]   = den;
-    if (s->res[0] && s->res[1] && s->res[2] && s->res[3]) {
+    /**不是全为0的处理 */
+    if (s->res[0] && s->res[1] && s->res[2] && s->res[3]) 
+    {
         uint64_t num = s->res[2] * (uint64_t)s->res[1];
         uint64_t den = s->res[0] * (uint64_t)s->res[3];
-        if (num > INT64_MAX || den > INT64_MAX) {
+        if (num > INT64_MAX || den > INT64_MAX) 
+        {
             num = num >> 1;
             den = den >> 1;
         }
-        av_reduce(&s->avctx->sample_aspect_ratio.num, &s->avctx->sample_aspect_ratio.den,
-                  num, den, INT32_MAX);
+        av_reduce(&s->avctx->sample_aspect_ratio.num, &s->avctx->sample_aspect_ratio.den,num, den, INT32_MAX);
         if (!s->avctx->sample_aspect_ratio.den)
+        {
             s->avctx->sample_aspect_ratio = (AVRational) {0, 1};
+        }
     }
 }
-
+/**TIFF解码标签 */
 static int tiff_decode_tag(TiffContext *s, AVFrame *frame)
 {
-    unsigned tag, type, count, off, value = 0, value2 = 0;
-    int i, start;
+    unsigned tag;
+    unsigned type
+    unsigned count;
+    unsigned off;
+    unsigned value = 0;
+    unsigned value2 = 0;
+    int i;
+    int start;
     int pos;
     int ret;
     double *dp;
-
+    /**实例化目录对象 */
     ret = ff_tread_tag(&s->gb, s->le, &tag, &type, &count, &start);
-    if (ret < 0) {
+    if (ret < 0) 
+    {
         goto end;
     }
-
+    /**获取距离起始位置的距离 */
     off = bytestream2_tell(&s->gb);
-    if (count == 1) {
-        switch (type) {
+    /**对于目录实例的中此数据类型的数量为1的处理 */
+    if (count == 1) 
+    {
+        switch (type) 
+        {
         case TIFF_BYTE:
         case TIFF_SHORT:
         case TIFF_LONG:
@@ -939,23 +973,29 @@ static int tiff_decode_tag(TiffContext *s, AVFrame *frame)
             value2 = ff_tget(&s->gb, TIFF_LONG, s->le);
             break;
         case TIFF_STRING:
-            if (count <= 4) {
+            if (count <= 4) 
+            {
                 break;
             }
         default:
             value = UINT_MAX;
         }
     }
-
-    switch (tag) {
+    /**根据标签的类型进行处理 */
+    switch (tag) 
+    {
+    /**图像的宽度 */
     case TIFF_WIDTH:
         s->width = value;
         break;
+    /**图像的高度 */
     case TIFF_HEIGHT:
         s->height = value;
         break;
+    /**每个图像样本占用的bit数 */
     case TIFF_BPP:
-        if (count > 5U) {
+        if (count > 5U) 
+        {
             av_log(s->avctx, AV_LOG_ERROR,
                    "This format is not supported (bpp=%d, %d components)\n",
                    value, count);
@@ -963,43 +1003,57 @@ static int tiff_decode_tag(TiffContext *s, AVFrame *frame)
         }
         s->bppcount = count;
         if (count == 1)
-            s->bpp = value;
-        else {
-            switch (type) {
+        {
+             s->bpp = value;
+        }
+        else 
+        {
+            switch (type) 
+            {
             case TIFF_BYTE:
             case TIFF_SHORT:
             case TIFF_LONG:
                 s->bpp = 0;
                 if (bytestream2_get_bytes_left(&s->gb) < type_sizes[type] * count)
+                {
                     return AVERROR_INVALIDDATA;
+                }
                 for (i = 0; i < count; i++)
+                {
                     s->bpp += ff_tget(&s->gb, type, s->le);
+                }
                 break;
             default:
                 s->bpp = -1;
             }
         }
         break;
+    /**每像素的样本数 */
     case TIFF_SAMPLES_PER_PIXEL:
-        if (count != 1) {
+        if (count != 1) 
+        {
             av_log(s->avctx, AV_LOG_ERROR,
                    "Samples per pixel requires a single value, many provided\n");
             return AVERROR_INVALIDDATA;
         }
-        if (value > 5U) {
-            av_log(s->avctx, AV_LOG_ERROR,
-                   "Samples per pixel %d is too large\n", value);
+        if (value > 5U) 
+        {
+            av_log(s->avctx, AV_LOG_ERROR,"Samples per pixel %d is too large\n", value);
             return AVERROR_INVALIDDATA;
         }
         if (s->bppcount == 1)
+        {
             s->bpp *= value;
+        }
         s->bppcount = value;
         break;
+    /**压缩类型 */
     case TIFF_COMPR:
         s->compr     = value;
         av_log(s->avctx, AV_LOG_DEBUG, "compression: %d\n", s->compr);
         s->predictor = 0;
-        switch (s->compr) {
+        switch (s->compr) 
+        {
         case TIFF_RAW:
         case TIFF_PACKBITS:
         case TIFF_LZW:
@@ -1034,38 +1088,53 @@ static int tiff_decode_tag(TiffContext *s, AVFrame *frame)
             return AVERROR_INVALIDDATA;
         }
         break;
+    /**每个带的列数 */
     case TIFF_ROWSPERSTRIP:
         if (!value || (type == TIFF_LONG && value == UINT_MAX))
-            value = s->height;
+        {
+             value = s->height;
+        }
         s->rps = FFMIN(value, s->height);
         break;
+    /**带数据相对于起始位置的位置 */
     case TIFF_STRIP_OFFS:
-        if (count == 1) {
-            if (value > INT_MAX) {
+        if (count == 1) 
+        {
+            if (value > INT_MAX) 
+            {
                 av_log(s->avctx, AV_LOG_ERROR,
                     "strippos %u too large\n", value);
                 return AVERROR_INVALIDDATA;
             }
             s->strippos = 0;
             s->stripoff = value;
-        } else
+        } 
+        else
+        {
             s->strippos = off;
+        }
         s->strips = count;
         if (s->strips == 1)
+        {
             s->rps = s->height;
+        }
         s->sot = type;
         break;
+    /**带的字节数 */
     case TIFF_STRIP_SIZE:
-        if (count == 1) {
-            if (value > INT_MAX) {
-                av_log(s->avctx, AV_LOG_ERROR,
-                    "stripsize %u too large\n", value);
+        if (count == 1) 
+        {
+            if (value > INT_MAX)
+            {
+                av_log(s->avctx, AV_LOG_ERROR,"stripsize %u too large\n", value);
                 return AVERROR_INVALIDDATA;
             }
             s->stripsizesoff = 0;
             s->stripsize     = value;
             s->strips        = 1;
-        } else {
+        } 
+        else 
+        {
             s->stripsizesoff = off;
         }
         s->strips = count;
@@ -1358,29 +1427,49 @@ end:
     bytestream2_seek(&s->gb, start, SEEK_SET);
     return 0;
 }
-
-static int decode_frame(AVCodecContext *avctx,
-                        void *data, int *got_frame, AVPacket *avpkt)
+/**解码帧
+ * avctx：
+ * data：
+ * got_frame：
+ * avpkt：
+ */
+static int decode_frame(AVCodecContext *avctx,void *data, int *got_frame, AVPacket *avpkt)
 {
     TiffContext *const s = avctx->priv_data;
     AVFrame *const p = data;
     ThreadFrame frame = { .f = data };
     unsigned off;
-    int le, ret, plane, planes;
-    int i, j, entries, stride;
-    unsigned soff, ssize;
+    int le;
+    int ret;
+    int plane;
+    int planes;
+    int i;
+    int j;
+    int entries;
+    int stride;
+    unsigned soff;
+    unsigned ssize;
     uint8_t *dst;
     GetByteContext stripsizes;
     GetByteContext stripdata;
-    int retry_for_subifd, retry_for_page;
-
+    int retry_for_subifd;
+    int retry_for_page;
+    /**初始化字节流的数据，传入的为字节对象初始化相关对象的参数
+     * gb为字节流对象
+     * avpkt->data：为数据的起始位置
+     * avpkt->size：为数据的长度
+     */
     bytestream2_init(&s->gb, avpkt->data, avpkt->size);
 
     // parse image header
-    if ((ret = ff_tdecode_header(&s->gb, &le, &off))) {
+    /**获取TIFF文件头的数据 */
+    if ((ret = ff_tdecode_header(&s->gb, &le, &off))) 
+    {
         av_log(avctx, AV_LOG_ERROR, "Invalid TIFF header\n");
         return ret;
-    } else if (off >= UINT_MAX - 14 || avpkt->size < off + 14) {
+    } 
+    else if (off >= UINT_MAX - 14 || avpkt->size < off + 14) 
+    {
         av_log(avctx, AV_LOG_ERROR, "IFD offset is greater than image size\n");
         return AVERROR_INVALIDDATA;
     }
@@ -1394,18 +1483,28 @@ again:
     s->white_level = 0;
     s->is_bayer    = 0;
     s->cur_page    = 0;
+    /**清除 */
     free_geotags(s);
 
     // Reset these offsets so we can tell if they were set this frame
     s->stripsizesoff = s->strippos = 0;
     /* parse image file directory */
+    /**根据IDF的偏移位置进行获取参数 */
     bytestream2_seek(&s->gb, off, SEEK_SET);
+    /**获取目录实例的数量 */
     entries = ff_tget_short(&s->gb, le);
+    /** */
     if (bytestream2_get_bytes_left(&s->gb) < entries * 12)
+    {
         return AVERROR_INVALIDDATA;
-    for (i = 0; i < entries; i++) {
+    }
+    /**逐个获取目录实例对象 */
+    for (i = 0; i < entries; i++) 
+    {
         if ((ret = tiff_decode_tag(s, p)) < 0)
+        {
             return ret;
+        }
     }
 
     /** whether we should look for this IFD's SubIFD */
@@ -1413,16 +1512,21 @@ again:
     /** whether we should look for this multi-page IFD's next page */
     retry_for_page = s->get_page && s->cur_page + 1 < s->get_page;  // get_page is 1-indexed
 
-    if (retry_for_page) {
+    if (retry_for_page) 
+    {
         // set offset to the next IFD
         off = ff_tget_long(&s->gb, le);
-    } else if (retry_for_subifd) {
+    } 
+    else if (retry_for_subifd) 
+    {
         // set offset to the SubIFD
         off = s->sub_ifd;
     }
 
-    if (retry_for_subifd || retry_for_page) {
-        if (off >= UINT_MAX - 14 || avpkt->size < off + 14) {
+    if (retry_for_subifd || retry_for_page) 
+    {
+        if (off >= UINT_MAX - 14 || avpkt->size < off + 14) 
+        {
             av_log(avctx, AV_LOG_ERROR, "IFD offset is greater than image size\n");
             return AVERROR_INVALIDDATA;
         }
@@ -1430,91 +1534,121 @@ again:
         goto again;
     }
 
-    for (i = 0; i<s->geotag_count; i++) {
+    for (i = 0; i<s->geotag_count; i++) 
+    {
         const char *keyname = get_geokey_name(s->geotags[i].key);
-        if (!keyname) {
+        if (!keyname) 
+        {
             av_log(avctx, AV_LOG_WARNING, "Unknown or unsupported GeoTIFF key %d\n", s->geotags[i].key);
             continue;
         }
-        if (get_geokey_type(s->geotags[i].key) != s->geotags[i].type) {
+        if (get_geokey_type(s->geotags[i].key) != s->geotags[i].type) 
+        {
             av_log(avctx, AV_LOG_WARNING, "Type of GeoTIFF key %d is wrong\n", s->geotags[i].key);
             continue;
         }
         ret = av_dict_set(&p->metadata, keyname, s->geotags[i].val, 0);
-        if (ret<0) {
+        if (ret<0) 
+        {
             av_log(avctx, AV_LOG_ERROR, "Writing metadata with key '%s' failed\n", keyname);
             return ret;
         }
     }
 
-    if (!s->strippos && !s->stripoff) {
+    if (!s->strippos && !s->stripoff) 
+    {
         av_log(avctx, AV_LOG_ERROR, "Image data is missing\n");
         return AVERROR_INVALIDDATA;
     }
     /* now we have the data and may start decoding */
     if ((ret = init_image(s, &frame)) < 0)
+    {
         return ret;
+    }
 
-    if (s->strips == 1 && !s->stripsize) {
+    if (s->strips == 1 && !s->stripsize) 
+    {
         av_log(avctx, AV_LOG_WARNING, "Image data size missing\n");
         s->stripsize = avpkt->size - s->stripoff;
     }
 
-    if (s->stripsizesoff) {
+    if (s->stripsizesoff) 
+    {
         if (s->stripsizesoff >= (unsigned)avpkt->size)
+        {
             return AVERROR_INVALIDDATA;
+        }
         bytestream2_init(&stripsizes, avpkt->data + s->stripsizesoff,
                          avpkt->size - s->stripsizesoff);
     }
-    if (s->strippos) {
+    if (s->strippos) 
+    {
         if (s->strippos >= (unsigned)avpkt->size)
+        {
             return AVERROR_INVALIDDATA;
-        bytestream2_init(&stripdata, avpkt->data + s->strippos,
-                         avpkt->size - s->strippos);
+        }
+        bytestream2_init(&stripdata, avpkt->data + s->strippos,avpkt->size - s->strippos);
     }
 
-    if (s->rps <= 0 || s->rps % s->subsampling[1]) {
+    if (s->rps <= 0 || s->rps % s->subsampling[1]) 
+    {
         av_log(avctx, AV_LOG_ERROR, "rps %d invalid\n", s->rps);
         return AVERROR_INVALIDDATA;
     }
 
     planes = s->planar ? s->bppcount : 1;
-    for (plane = 0; plane < planes; plane++) {
+    for (plane = 0; plane < planes; plane++) 
+    {
         uint8_t *five_planes = NULL;
         int remaining = avpkt->size;
         int decoded_height;
         stride = p->linesize[plane];
         dst = p->data[plane];
-        if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&
-            s->avctx->pix_fmt == AV_PIX_FMT_RGBA) {
+        if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&s->avctx->pix_fmt == AV_PIX_FMT_RGBA) 
+        {
             stride = stride * 5 / 4;
             five_planes =
             dst = av_malloc(stride * s->height);
             if (!dst)
+            {
                 return AVERROR(ENOMEM);
+            }
         }
-        for (i = 0; i < s->height; i += s->rps) {
+        for (i = 0; i < s->height; i += s->rps) 
+        {
             if (i)
+            {
                 dst += s->rps * stride;
+            }
             if (s->stripsizesoff)
+            {
                 ssize = ff_tget(&stripsizes, s->sstype, le);
+            }
             else
+            {
                 ssize = s->stripsize;
+            }
 
             if (s->strippos)
+            {
                 soff = ff_tget(&stripdata, s->sot, le);
+            }
             else
+            {
                 soff = s->stripoff;
+            }
 
-            if (soff > avpkt->size || ssize > avpkt->size - soff || ssize > remaining) {
+            if (soff > avpkt->size || ssize > avpkt->size - soff || ssize > remaining) 
+            {
                 av_log(avctx, AV_LOG_ERROR, "Invalid strip size/offset\n");
                 av_freep(&five_planes);
                 return AVERROR_INVALIDDATA;
             }
             remaining -= ssize;
-            if ((ret = tiff_unpack_strip(s, p, dst, stride, avpkt->data + soff, ssize, i,
-                                         FFMIN(s->rps, s->height - i))) < 0) {
-                if (avctx->err_recognition & AV_EF_EXPLODE) {
+            if ((ret = tiff_unpack_strip(s, p, dst, stride, avpkt->data + soff, ssize, i,FFMIN(s->rps, s->height - i))) < 0) 
+            {
+                if (avctx->err_recognition & AV_EF_EXPLODE) 
+                {
                     av_freep(&five_planes);
                     return ret;
                 }
@@ -1523,64 +1657,88 @@ again:
         }
         decoded_height = FFMIN(i, s->height);
 
-        if (s->predictor == 2) {
-            if (s->photometric == TIFF_PHOTOMETRIC_YCBCR) {
+        if (s->predictor == 2) 
+        {
+            if (s->photometric == TIFF_PHOTOMETRIC_YCBCR) 
+            {
                 av_log(s->avctx, AV_LOG_ERROR, "predictor == 2 with YUV is unsupported");
                 return AVERROR_PATCHWELCOME;
             }
             dst   = five_planes ? five_planes : p->data[plane];
             soff  = s->bpp >> 3;
             if (s->planar)
+            {
                 soff  = FFMAX(soff / s->bppcount, 1);
+            }
             ssize = s->width * soff;
             if (s->avctx->pix_fmt == AV_PIX_FMT_RGB48LE ||
                 s->avctx->pix_fmt == AV_PIX_FMT_RGBA64LE ||
                 s->avctx->pix_fmt == AV_PIX_FMT_GRAY16LE ||
                 s->avctx->pix_fmt == AV_PIX_FMT_YA16LE ||
                 s->avctx->pix_fmt == AV_PIX_FMT_GBRP16LE ||
-                s->avctx->pix_fmt == AV_PIX_FMT_GBRAP16LE) {
-                for (i = 0; i < decoded_height; i++) {
+                s->avctx->pix_fmt == AV_PIX_FMT_GBRAP16LE) 
+            {
+                for (i = 0; i < decoded_height; i++) 
+                {
                     for (j = soff; j < ssize; j += 2)
+                    {
                         AV_WL16(dst + j, AV_RL16(dst + j) + AV_RL16(dst + j - soff));
+                    }
                     dst += stride;
                 }
-            } else if (s->avctx->pix_fmt == AV_PIX_FMT_RGB48BE ||
+            } 
+            else if (s->avctx->pix_fmt == AV_PIX_FMT_RGB48BE ||
                        s->avctx->pix_fmt == AV_PIX_FMT_RGBA64BE ||
                        s->avctx->pix_fmt == AV_PIX_FMT_GRAY16BE ||
                        s->avctx->pix_fmt == AV_PIX_FMT_YA16BE ||
                        s->avctx->pix_fmt == AV_PIX_FMT_GBRP16BE ||
-                       s->avctx->pix_fmt == AV_PIX_FMT_GBRAP16BE) {
-                for (i = 0; i < decoded_height; i++) {
+                       s->avctx->pix_fmt == AV_PIX_FMT_GBRAP16BE) 
+            {
+                for (i = 0; i < decoded_height; i++) 
+                {
                     for (j = soff; j < ssize; j += 2)
+                    {
                         AV_WB16(dst + j, AV_RB16(dst + j) + AV_RB16(dst + j - soff));
+                    }
                     dst += stride;
                 }
-            } else {
-                for (i = 0; i < decoded_height; i++) {
+            } 
+            else 
+            {
+                for (i = 0; i < decoded_height; i++) 
+                {
                     for (j = soff; j < ssize; j++)
+                    {
                         dst[j] += dst[j - soff];
+                    }
                     dst += stride;
                 }
             }
         }
 
-        if (s->photometric == TIFF_PHOTOMETRIC_WHITE_IS_ZERO) {
+        if (s->photometric == TIFF_PHOTOMETRIC_WHITE_IS_ZERO) 
+        {
             int c = (s->avctx->pix_fmt == AV_PIX_FMT_PAL8 ? (1<<s->bpp) - 1 : 255);
             dst = p->data[plane];
-            for (i = 0; i < s->height; i++) {
+            for (i = 0; i < s->height; i++) 
+            {
                 for (j = 0; j < stride; j++)
+                {
                     dst[j] = c - dst[j];
+                }
                 dst += stride;
             }
         }
 
-        if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&
-            (s->avctx->pix_fmt == AV_PIX_FMT_RGB0 || s->avctx->pix_fmt == AV_PIX_FMT_RGBA)) {
+        if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&(s->avctx->pix_fmt == AV_PIX_FMT_RGB0 || s->avctx->pix_fmt == AV_PIX_FMT_RGBA)) 
+        {
             int x = s->avctx->pix_fmt == AV_PIX_FMT_RGB0 ? 4 : 5;
             uint8_t *src = five_planes ? five_planes : p->data[plane];
             dst = p->data[plane];
-            for (i = 0; i < s->height; i++) {
-                for (j = 0; j < s->width; j++) {
+            for (i = 0; i < s->height; i++) 
+            {
+                for (j = 0; j < s->width; j++) 
+                {
                     int k =  255 - src[x * j + 3];
                     int r = (255 - src[x * j    ]) * k;
                     int g = (255 - src[x * j + 1]) * k;
@@ -1594,11 +1752,14 @@ again:
                 dst += p->linesize[plane];
             }
             av_freep(&five_planes);
-        } else if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&
-            s->avctx->pix_fmt == AV_PIX_FMT_RGBA64BE) {
+        } 
+        else if (s->photometric == TIFF_PHOTOMETRIC_SEPARATED &&s->avctx->pix_fmt == AV_PIX_FMT_RGBA64BE) 
+        {
             dst = p->data[plane];
-            for (i = 0; i < s->height; i++) {
-                for (j = 0; j < s->width; j++) {
+            for (i = 0; i < s->height; i++) 
+            {
+                for (j = 0; j < s->width; j++) 
+                {
                     uint64_t k =  65535 - AV_RB16(dst + 8 * j + 6);
                     uint64_t r = (65535 - AV_RB16(dst + 8 * j    )) * k;
                     uint64_t g = (65535 - AV_RB16(dst + 8 * j + 2)) * k;
@@ -1613,18 +1774,23 @@ again:
         }
     }
 
-    if (s->planar && s->bppcount > 2) {
+    if (s->planar && s->bppcount > 2) 
+    {
         FFSWAP(uint8_t*, p->data[0],     p->data[2]);
         FFSWAP(int,      p->linesize[0], p->linesize[2]);
         FFSWAP(uint8_t*, p->data[0],     p->data[1]);
         FFSWAP(int,      p->linesize[0], p->linesize[1]);
     }
 
-    if (s->is_bayer && s->white_level && s->bpp == 16) {
+    if (s->is_bayer && s->white_level && s->bpp == 16) 
+    {
         uint16_t *dst = (uint16_t *)p->data[0];
-        for (i = 0; i < s->height; i++) {
+        for (i = 0; i < s->height; i++) 
+        {
             for (j = 0; j < s->width; j++)
+            {
                 dst[j] = FFMIN((dst[j] / (float)s->white_level) * 65535, 65535);
+            }
             dst += stride / 2;
         }
     }
@@ -1633,7 +1799,7 @@ again:
 
     return avpkt->size;
 }
-
+/**tiff初始化 */
 static av_cold int tiff_init(AVCodecContext *avctx)
 {
     TiffContext *s = avctx->priv_data;
@@ -1645,12 +1811,14 @@ static av_cold int tiff_init(AVCodecContext *avctx)
     s->avctx  = avctx;
     ff_lzw_decode_open(&s->lzw);
     if (!s->lzw)
+    {
         return AVERROR(ENOMEM);
+    }
     ff_ccitt_unpack_init();
 
     return 0;
 }
-
+/**tiff结束 */
 static av_cold int tiff_end(AVCodecContext *avctx)
 {
     TiffContext *const s = avctx->priv_data;
@@ -1680,7 +1848,19 @@ static const AVClass tiff_decoder_class = {
     .option     = tiff_options,
     .version    = LIBAVUTIL_VERSION_INT,
 };
-
+/**TIFF解码器结构体
+ * .name：短名称
+ * .long_name：长名称
+ * .type：类型号
+ * .id：编码器的ID
+ * .priv_data_size
+ * .init：初始化函数
+ * .close
+ * .decode：解码帧函数
+ * .init_thread_copy
+ * .capabilities
+ * .priv_class
+ */
 AVCodec ff_tiff_decoder = {
     .name           = "tiff",
     .long_name      = NULL_IF_CONFIG_SMALL("TIFF image"),

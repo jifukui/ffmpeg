@@ -73,19 +73,26 @@ static size_t max_alloc_size= INT_MAX;
 void av_max_alloc(size_t max){
     max_alloc_size = max;
 }
-
+/**申请内存空间 */
 void *av_malloc(size_t size)
 {
     void *ptr = NULL;
 
     /* let's disallow possibly ambiguous cases */
+    /**申请的空间超出限制 */
     if (size > (max_alloc_size - 32))
+    {
         return NULL;
+    }
 
 #if HAVE_POSIX_MEMALIGN
     if (size) //OS X on SDK 10.6 has a broken posix_memalign implementation
-    if (posix_memalign(&ptr, ALIGN, size))
-        ptr = NULL;
+    {
+        if (posix_memalign(&ptr, ALIGN, size))
+        {
+            ptr = NULL;
+        }
+    }
 #elif HAVE_ALIGNED_MALLOC
     ptr = _aligned_malloc(size, ALIGN);
 #elif HAVE_MEMALIGN
@@ -127,11 +134,13 @@ void *av_malloc(size_t size)
     }
 #if CONFIG_MEMORY_POISONING
     if (ptr)
+    {
         memset(ptr, FF_MEMORY_POISON, size);
+    }
 #endif
     return ptr;
 }
-
+/**重新申请内存空间 */
 void *av_realloc(void *ptr, size_t size)
 {
     /* let's disallow possibly ambiguous cases */
@@ -144,35 +153,40 @@ void *av_realloc(void *ptr, size_t size)
     return realloc(ptr, size + !size);
 #endif
 }
-
+/** */
 void *av_realloc_f(void *ptr, size_t nelem, size_t elsize)
 {
     size_t size;
     void *r;
 
-    if (av_size_mult(elsize, nelem, &size)) {
+    if (av_size_mult(elsize, nelem, &size)) 
+    {
         av_free(ptr);
         return NULL;
     }
     r = av_realloc(ptr, size);
     if (!r)
+    {
         av_free(ptr);
+    }
     return r;
 }
-
+/** */
 int av_reallocp(void *ptr, size_t size)
 {
     void *val;
-
-    if (!size) {
+    /**对于传入的数据size为0的处理 */
+    if (!size) 
+    {
         av_freep(ptr);
         return 0;
     }
-
+    /** */
     memcpy(&val, ptr, sizeof(val));
     val = av_realloc(val, size);
 
-    if (!val) {
+    if (!val) 
+    {
         av_freep(ptr);
         return AVERROR(ENOMEM);
     }
@@ -180,14 +194,14 @@ int av_reallocp(void *ptr, size_t size)
     memcpy(ptr, &val, sizeof(val));
     return 0;
 }
-
+/** */
 void *av_malloc_array(size_t nmemb, size_t size)
 {
     if (!size || nmemb >= INT_MAX / size)
         return NULL;
     return av_malloc(nmemb * size);
 }
-
+/** */
 void *av_mallocz_array(size_t nmemb, size_t size)
 {
     if (!size || nmemb >= INT_MAX / size)
@@ -214,7 +228,7 @@ int av_reallocp_array(void *ptr, size_t nmemb, size_t size)
 
     return 0;
 }
-
+/**释放此指针指向的内存空间 */
 void av_free(void *ptr)
 {
 #if HAVE_ALIGNED_MALLOC
@@ -223,7 +237,7 @@ void av_free(void *ptr)
     free(ptr);
 #endif
 }
-
+/** */
 void av_freep(void *arg)
 {
     void *val;
@@ -232,30 +246,37 @@ void av_freep(void *arg)
     memcpy(arg, &(void *){ NULL }, sizeof(val));
     av_free(val);
 }
-
+/** */
 void *av_mallocz(size_t size)
 {
     void *ptr = av_malloc(size);
     if (ptr)
+    {
         memset(ptr, 0, size);
+    }
     return ptr;
 }
 
 void *av_calloc(size_t nmemb, size_t size)
 {
     if (size <= 0 || nmemb >= INT_MAX / size)
+    {
         return NULL;
+    }
     return av_mallocz(nmemb * size);
 }
 
 char *av_strdup(const char *s)
 {
     char *ptr = NULL;
-    if (s) {
+    if (s) 
+    {
         size_t len = strlen(s) + 1;
         ptr = av_realloc(NULL, len);
         if (ptr)
+        {
             memcpy(ptr, s, len);
+        }
     }
     return ptr;
 }

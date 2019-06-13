@@ -29,9 +29,15 @@
 #include "libavutil/avassert.h"
 #include "libavutil/common.h"
 #include "libavutil/intreadwrite.h"
-
+/**字节流对象
+ * buffer
+ * buffer_end
+ * buffer_start
+ */
 typedef struct GetByteContext {
-    const uint8_t *buffer, *buffer_end, *buffer_start;
+    const uint8_t *buffer;
+    const uint8_t *buffer_end;
+    const uint8_t *buffer_start;
 } GetByteContext;
 
 typedef struct PutByteContext {
@@ -129,10 +135,12 @@ DEF(unsigned int, byte, 1, AV_RB8 , AV_WB8)
 #   define bytestream2_peek_ne32 bytestream2_peek_le32
 #   define bytestream2_peek_ne64 bytestream2_peek_le64
 #endif
-
-static av_always_inline void bytestream2_init(GetByteContext *g,
-                                              const uint8_t *buf,
-                                              int buf_size)
+/**初始化字节流对象
+ * g->buffer的位置指向buf的位置
+ * g->buffer_start为字节流的起始位置
+ * g->buffer_end为字节流的终止位置
+ */
+static av_always_inline void bytestream2_init(GetByteContext *g,const uint8_t *buf,int buf_size)
 {
     av_assert0(buf_size >= 0);
     g->buffer       = buf;
@@ -150,7 +158,7 @@ static av_always_inline void bytestream2_init_writer(PutByteContext *p,
     p->buffer_end   = buf + buf_size;
     p->eof          = 0;
 }
-
+/**返回距离末尾的距离 */
 static av_always_inline unsigned int bytestream2_get_bytes_left(GetByteContext *g)
 {
     return g->buffer_end - g->buffer;
@@ -184,7 +192,7 @@ static av_always_inline void bytestream2_skip_p(PutByteContext *p,
         p->eof = 1;
     p->buffer += size2;
 }
-
+/**返回当前位置距离开始位置的距离 */
 static av_always_inline int bytestream2_tell(GetByteContext *g)
 {
     return (int)(g->buffer - g->buffer_start);
@@ -204,15 +212,17 @@ static av_always_inline int bytestream2_size_p(PutByteContext *p)
 {
     return (int)(p->buffer_end - p->buffer_start);
 }
-
-static av_always_inline int bytestream2_seek(GetByteContext *g,
-                                             int offset,
-                                             int whence)
+/**将指针指向当前需要操作的位置
+ * GetByteContext为字节流的对象
+ * offset为偏移位置
+ * whence：为相对位置的参照坐标
+ */
+static av_always_inline int bytestream2_seek(GetByteContext *g,int offset,int whence)
 {
-    switch (whence) {
+    switch (whence) 
+    {
     case SEEK_CUR:
-        offset     = av_clip(offset, -(g->buffer - g->buffer_start),
-                             g->buffer_end - g->buffer);
+        offset     = av_clip(offset, -(g->buffer - g->buffer_start),g->buffer_end - g->buffer);
         g->buffer += offset;
         break;
     case SEEK_END:
@@ -229,9 +239,7 @@ static av_always_inline int bytestream2_seek(GetByteContext *g,
     return bytestream2_tell(g);
 }
 
-static av_always_inline int bytestream2_seek_p(PutByteContext *p,
-                                               int offset,
-                                               int whence)
+static av_always_inline int bytestream2_seek_p(PutByteContext *p,int offset,int whence)
 {
     p->eof = 0;
     switch (whence) {
