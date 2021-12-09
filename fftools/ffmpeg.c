@@ -119,7 +119,12 @@ const char *const forced_keyframes_const_names[] = {
     "t",
     NULL
 };
-
+/**
+ * @brief 基准时间戳
+ * real_usec：
+ * user_usec：用户时间
+ * sys_usec：系统时间
+ */
 typedef struct BenchmarkTimeStamps {
     int64_t real_usec;
     int64_t user_usec;
@@ -172,7 +177,9 @@ static void free_input_threads(void);
    Convert subtitles to video with alpha to insert them in filter graphs.
    This is a temporary solution until libavfilter gets real subtitles support.
  */
-
+/**
+ * 
+*/
 static int sub2video_get_blank_frame(InputStream *ist)
 {
     int ret;
@@ -187,7 +194,15 @@ static int sub2video_get_blank_frame(InputStream *ist)
     memset(frame->data[0], 0, frame->height * frame->linesize[0]);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param dst 
+ * @param dst_linesize 
+ * @param w 
+ * @param h 
+ * @param r 
+ */
 static void sub2video_copy_rect(uint8_t *dst, int dst_linesize, int w, int h,
                                 AVSubtitleRect *r)
 {
@@ -218,7 +233,12 @@ static void sub2video_copy_rect(uint8_t *dst, int dst_linesize, int w, int h,
         src += r->linesize[0];
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param pts 
+ */
 static void sub2video_push_ref(InputStream *ist, int64_t pts)
 {
     AVFrame *frame = ist->sub2video.frame;
@@ -236,7 +256,12 @@ static void sub2video_push_ref(InputStream *ist, int64_t pts)
                    av_err2str(ret));
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param sub 
+ */
 void sub2video_update(InputStream *ist, AVSubtitle *sub)
 {
     AVFrame *frame = ist->sub2video.frame;
@@ -270,7 +295,12 @@ void sub2video_update(InputStream *ist, AVSubtitle *sub)
     sub2video_push_ref(ist, pts);
     ist->sub2video.end_pts = end_pts;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param pts 
+ */
 static void sub2video_heartbeat(InputStream *ist, int64_t pts)
 {
     InputFile *infile = input_files[ist->file_index];
@@ -300,7 +330,11 @@ static void sub2video_heartbeat(InputStream *ist, int64_t pts)
             sub2video_push_ref(ist2, pts2);
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ */
 static void sub2video_flush(InputStream *ist)
 {
     int i;
@@ -316,7 +350,10 @@ static void sub2video_flush(InputStream *ist)
 }
 
 /* end of sub2video hack */
-
+/**
+ * @brief 
+ * 
+ */
 static void term_exit_sigsafe(void)
 {
 #if HAVE_TERMIOS_H
@@ -324,7 +361,10 @@ static void term_exit_sigsafe(void)
         tcsetattr (0, TCSANOW, &oldtty);
 #endif
 }
-
+/**
+ * @brief 
+ * 
+ */
 void term_exit(void)
 {
     av_log(NULL, AV_LOG_QUIET, "%s", "");
@@ -336,7 +376,11 @@ static volatile int received_nb_signals = 0;
 static atomic_int transcode_init_done = ATOMIC_VAR_INIT(0);
 static volatile int ffmpeg_exited = 0;
 static int main_return_code = 0;
-
+/**
+ * @brief 
+ * 
+ * @param sig 
+ */
 static void
 sigterm_handler(int sig)
 {
@@ -383,7 +427,10 @@ static BOOL WINAPI CtrlHandler(DWORD fdwCtrlType)
     }
 }
 #endif
-
+/**
+ * @brief 
+ * 
+ */
 void term_init(void)
 {
 #if HAVE_TERMIOS_H
@@ -421,7 +468,11 @@ void term_init(void)
 #endif
 }
 
-/* read a key without blocking */
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 static int read_key(void)
 {
     unsigned char ch;
@@ -472,14 +523,23 @@ static int read_key(void)
 #endif
     return -1;
 }
-
+/**
+ * @brief 解码中断回调函数
+ * 
+ * @param ctx 
+ * @return int 
+ */
 static int decode_interrupt_cb(void *ctx)
 {
     return received_nb_signals > atomic_load(&transcode_init_done);
 }
 
 const AVIOInterruptCB int_cb = { decode_interrupt_cb, NULL };
-
+/**
+ * @brief FFmpeg退出程序
+ * 
+ * @param ret 
+ */
 static void ffmpeg_cleanup(int ret)
 {
     int i, j;
@@ -632,7 +692,12 @@ static void ffmpeg_cleanup(int ret)
     term_exit();
     ffmpeg_exited = 1;
 }
-
+/**
+ * @brief 
+ * 
+ * @param a 
+ * @param b 
+ */
 void remove_avoptions(AVDictionary **a, AVDictionary *b)
 {
     AVDictionaryEntry *t = NULL;
@@ -641,7 +706,11 @@ void remove_avoptions(AVDictionary **a, AVDictionary *b)
         av_dict_set(a, t->key, NULL, AV_DICT_MATCH_CASE);
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param m 
+ */
 void assert_avoptions(AVDictionary *m)
 {
     AVDictionaryEntry *t;
@@ -650,12 +719,22 @@ void assert_avoptions(AVDictionary *m)
         exit_program(1);
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param c 
+ * @param encoder 
+ */
 static void abort_codec_experimental(AVCodec *c, int encoder)
 {
     exit_program(1);
 }
-
+/**
+ * @brief 更新基准
+ * 
+ * @param fmt 
+ * @param ... 
+ */
 static void update_benchmark(const char *fmt, ...)
 {
     if (do_benchmark_all) {
@@ -676,7 +755,13 @@ static void update_benchmark(const char *fmt, ...)
         current_time = t;
     }
 }
-
+/**
+ * @brief 关闭所有的输出流
+ * 
+ * @param ost 
+ * @param this_stream 
+ * @param others 
+ */
 static void close_all_output_streams(OutputStream *ost, OSTFinished this_stream, OSTFinished others)
 {
     int i;
@@ -685,7 +770,14 @@ static void close_all_output_streams(OutputStream *ost, OSTFinished this_stream,
         ost2->finished |= ost == ost2 ? this_stream : others;
     }
 }
-
+/**
+ * @brief 写包
+ * 
+ * @param of 
+ * @param pkt 
+ * @param ost 
+ * @param unqueue 
+ */
 static void write_packet(OutputFile *of, AVPacket *pkt, OutputStream *ost, int unqueue)
 {
     AVFormatContext *s = of->ctx;
@@ -820,7 +912,11 @@ static void write_packet(OutputFile *of, AVPacket *pkt, OutputStream *ost, int u
     }
     av_packet_unref(pkt);
 }
-
+/**
+ * @brief 关闭输出流
+ * 
+ * @param ost 
+ */
 static void close_output_stream(OutputStream *ost)
 {
     OutputFile *of = output_files[ost->file_index];
@@ -843,6 +939,9 @@ static void close_output_stream(OutputStream *ost)
  * therefore flush any delayed packets to the output.  A blank packet
  * must be supplied in this case.
  */
+/**
+ * 输出包
+*/
 static void output_packet(OutputFile *of, AVPacket *pkt,
                           OutputStream *ost, int eof)
 {
@@ -893,7 +992,12 @@ finish:
             exit_program(1);
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @return int 
+ */
 static int check_recording_time(OutputStream *ost)
 {
     OutputFile *of = output_files[ost->file_index];
@@ -906,7 +1010,13 @@ static int check_recording_time(OutputStream *ost)
     }
     return 1;
 }
-
+/**
+ * @brief 
+ * 
+ * @param of 
+ * @param ost 
+ * @param frame 
+ */
 static void do_audio_out(OutputFile *of, OutputStream *ost,
                          AVFrame *frame)
 {
@@ -966,7 +1076,13 @@ error:
     av_log(NULL, AV_LOG_FATAL, "Audio encoding failed\n");
     exit_program(1);
 }
-
+/**
+ * @brief 
+ * 
+ * @param of 
+ * @param ost 
+ * @param sub 
+ */
 static void do_subtitle_out(OutputFile *of,
                             OutputStream *ost,
                             AVSubtitle *sub)
@@ -1049,7 +1165,14 @@ static void do_subtitle_out(OutputFile *of,
         output_packet(of, &pkt, ost, 0);
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param of 
+ * @param ost 
+ * @param next_picture 
+ * @param sync_ipts 
+ */
 static void do_video_out(OutputFile *of,
                          OutputStream *ost,
                          AVFrame *next_picture,
@@ -1350,12 +1473,22 @@ error:
     av_log(NULL, AV_LOG_FATAL, "Video encoding failed\n");
     exit_program(1);
 }
-
+/**
+ * @brief 计算psnr
+ * 
+ * @param d 
+ * @return double 
+ */
 static double psnr(double d)
 {
     return -10.0 * log10(d);
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @param frame_size 
+ */
 static void do_video_stats(OutputStream *ost, int frame_size)
 {
     AVCodecContext *enc;
@@ -1398,9 +1531,20 @@ static void do_video_stats(OutputStream *ost, int frame_size)
         fprintf(vstats_file, "type= %c\n", av_get_picture_type_char(ost->pict_type));
     }
 }
-
+/**
+ * @brief 初始化输出流
+ * 
+ * @param ost 
+ * @param error 
+ * @param error_len 
+ * @return int 
+ */
 static int init_output_stream(OutputStream *ost, char *error, int error_len);
-
+/**
+ * @brief 结束输出流
+ * 
+ * @param ost 
+ */
 static void finish_output_stream(OutputStream *ost)
 {
     OutputFile *of = output_files[ost->file_index];
@@ -1415,10 +1559,10 @@ static void finish_output_stream(OutputStream *ost)
 }
 
 /**
- * Get and encode new output from any of the filtergraphs, without causing
- * activity.
- *
- * @return  0 for success, <0 for severe errors
+ * @brief 
+ * 
+ * @param flush 
+ * @return int 
  */
 static int reap_filters(int flush)
 {
@@ -1523,7 +1667,11 @@ static int reap_filters(int flush)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param total_size 
+ */
 static void print_final_stats(int64_t total_size)
 {
     uint64_t video_size = 0, audio_size = 0, extra_size = 0, other_size = 0;
@@ -1640,7 +1788,13 @@ static void print_final_stats(int64_t total_size)
         }
     }
 }
-
+/**
+ * @brief 打印报告
+ * 
+ * @param is_last_report 
+ * @param timer_start 
+ * @param cur_time 
+ */
 static void print_report(int is_last_report, int64_t timer_start, int64_t cur_time)
 {
     AVBPrint buf, buf_script;
@@ -1839,7 +1993,12 @@ static void print_report(int is_last_report, int64_t timer_start, int64_t cur_ti
     if (is_last_report)
         print_final_stats(total_size);
 }
-
+/**
+ * @brief 
+ * 
+ * @param ifilter 
+ * @param par 
+ */
 static void ifilter_parameters_from_codecpar(InputFilter *ifilter, AVCodecParameters *par)
 {
     // We never got any input. Set a fake format, which will
@@ -1852,7 +2011,10 @@ static void ifilter_parameters_from_codecpar(InputFilter *ifilter, AVCodecParame
     ifilter->height                 = par->height;
     ifilter->sample_aspect_ratio    = par->sample_aspect_ratio;
 }
-
+/**
+ * @brief 
+ * 
+ */
 static void flush_encoders(void)
 {
     int i, ret;
@@ -1969,8 +2131,12 @@ static void flush_encoders(void)
     }
 }
 
-/*
- * Check whether a packet from ist should be written into ost at this time
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param ost 
+ * @return int 
  */
 static int check_output_constraints(InputStream *ist, OutputStream *ost)
 {
@@ -1988,7 +2154,13 @@ static int check_output_constraints(InputStream *ist, OutputStream *ost)
 
     return 1;
 }
-
+/**
+ * @brief 执行流拷贝
+ * 
+ * @param ist 
+ * @param ost 
+ * @param pkt 
+ */
 static void do_streamcopy(InputStream *ist, OutputStream *ost, const AVPacket *pkt)
 {
     OutputFile *of = output_files[ost->file_index];
@@ -2075,7 +2247,12 @@ static void do_streamcopy(InputStream *ist, OutputStream *ost, const AVPacket *p
 
     output_packet(of, &opkt, ost, 0);
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @return int 
+ */
 int guess_input_channel_layout(InputStream *ist)
 {
     AVCodecContext *dec = ist->dec_ctx;
@@ -2095,7 +2272,13 @@ int guess_input_channel_layout(InputStream *ist)
     }
     return 1;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param got_output 
+ * @param ret 
+ */
 static void check_decode_result(InputStream *ist, int *got_output, int ret)
 {
     if (*got_output || ret<0)
@@ -2114,7 +2297,12 @@ static void check_decode_result(InputStream *ist, int *got_output, int ret)
     }
 }
 
-// Filters can be configured only if the formats of all inputs are known.
+/**
+ * @brief 
+ * 
+ * @param fg 
+ * @return int 
+ */
 static int ifilter_has_all_input_formats(FilterGraph *fg)
 {
     int i;
@@ -2125,7 +2313,13 @@ static int ifilter_has_all_input_formats(FilterGraph *fg)
     }
     return 1;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ifilter 
+ * @param frame 
+ * @return int 
+ */
 static int ifilter_send_frame(InputFilter *ifilter, AVFrame *frame)
 {
     FilterGraph *fg = ifilter->graph;
@@ -2202,7 +2396,13 @@ static int ifilter_send_frame(InputFilter *ifilter, AVFrame *frame)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ifilter 
+ * @param pts 
+ * @return int 
+ */
 static int ifilter_send_eof(InputFilter *ifilter, int64_t pts)
 {
     int ret;
@@ -2226,10 +2426,15 @@ static int ifilter_send_eof(InputFilter *ifilter, int64_t pts)
     return 0;
 }
 
-// This does not quite work like avcodec_decode_audio4/avcodec_decode_video2.
-// There is the following difference: if you got a frame, you must call
-// it again with pkt=NULL. pkt==NULL is treated differently from pkt->size==0
-// (pkt==NULL means get more output, pkt->size==0 is a flush/drain packet)
+/**
+ * @brief 
+ * 
+ * @param avctx 
+ * @param frame 
+ * @param got_frame 
+ * @param pkt 
+ * @return int 
+ */
 static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacket *pkt)
 {
     int ret;
@@ -2252,7 +2457,13 @@ static int decode(AVCodecContext *avctx, AVFrame *frame, int *got_frame, AVPacke
 
     return 0;
 }
-
+/**
+ * @brief 发送帧到滤镜
+ * 
+ * @param ist 输入数据流
+ * @param decoded_frame 解码帧
+ * @return int 
+ */
 static int send_frame_to_filters(InputStream *ist, AVFrame *decoded_frame)
 {
     int i, ret;
@@ -2278,7 +2489,15 @@ static int send_frame_to_filters(InputStream *ist, AVFrame *decoded_frame)
     }
     return ret;
 }
-
+/**
+ * @brief 解码音频
+ * 
+ * @param ist 
+ * @param pkt 
+ * @param got_output 
+ * @param decode_failed 
+ * @return int 
+ */
 static int decode_audio(InputStream *ist, AVPacket *pkt, int *got_output,
                         int *decode_failed)
 {
@@ -2340,7 +2559,17 @@ static int decode_audio(InputStream *ist, AVPacket *pkt, int *got_output,
     av_frame_unref(decoded_frame);
     return err < 0 ? err : ret;
 }
-
+/**
+ * @brief 解码视频
+ * 
+ * @param ist 
+ * @param pkt 
+ * @param got_output 
+ * @param duration_pts 
+ * @param eof 
+ * @param decode_failed 
+ * @return int 
+ */
 static int decode_video(InputStream *ist, AVPacket *pkt, int *got_output, int64_t *duration_pts, int eof,
                         int *decode_failed)
 {
@@ -2473,7 +2702,15 @@ fail:
     av_frame_unref(decoded_frame);
     return err < 0 ? err : ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @param pkt 
+ * @param got_output 
+ * @param decode_failed 
+ * @return int 
+ */
 static int transcode_subtitles(InputStream *ist, AVPacket *pkt, int *got_output,
                                int *decode_failed)
 {
@@ -2550,7 +2787,12 @@ out:
         avsubtitle_free(&subtitle);
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ist 
+ * @return int 
+ */
 static int send_filter_eof(InputStream *ist)
 {
     int i, ret;
@@ -2566,6 +2808,14 @@ static int send_filter_eof(InputStream *ist)
     return 0;
 }
 
+/**
+ * @brief 处理输入包
+ * 
+ * @param ist 
+ * @param pkt 
+ * @param no_eof 
+ * @return int 
+ */
 /* pkt = NULL means EOF (needed to flush decoder buffers) */
 static int process_input_packet(InputStream *ist, const AVPacket *pkt, int no_eof)
 {
@@ -2748,7 +2998,10 @@ static int process_input_packet(InputStream *ist, const AVPacket *pkt, int no_eo
 
     return !eof_reached;
 }
-
+/**
+ * @brief 打印 sdp
+ * 
+ */
 static void print_sdp(void)
 {
     char sdp[16384];
@@ -2793,7 +3046,13 @@ static void print_sdp(void)
 fail:
     av_freep(&avc);
 }
-
+/**
+ * @brief 获取像素格式
+ * 
+ * @param s 
+ * @param pix_fmts 
+ * @return enum AVPixelFormat 
+ */
 static enum AVPixelFormat get_format(AVCodecContext *s, const enum AVPixelFormat *pix_fmts)
 {
     InputStream *ist = s->opaque;
@@ -2879,7 +3138,14 @@ static enum AVPixelFormat get_format(AVCodecContext *s, const enum AVPixelFormat
 
     return *p;
 }
-
+/**
+ * @brief Get the buffer object
+ * 
+ * @param s 
+ * @param frame 
+ * @param flags 
+ * @return int 
+ */
 static int get_buffer(AVCodecContext *s, AVFrame *frame, int flags)
 {
     InputStream *ist = s->opaque;
@@ -2889,7 +3155,14 @@ static int get_buffer(AVCodecContext *s, AVFrame *frame, int flags)
 
     return avcodec_default_get_buffer2(s, frame, flags);
 }
-
+/**
+ * @brief 初始化输入流
+ * 
+ * @param ist_index 
+ * @param error 
+ * @param error_len 
+ * @return int 
+ */
 static int init_input_stream(int ist_index, char *error, int error_len)
 {
     int ret;
@@ -2954,19 +3227,37 @@ static int init_input_stream(int ist_index, char *error, int error_len)
 
     return 0;
 }
-
+/**
+ * @brief 获取输入流
+ * 
+ * @param ost 
+ * @return InputStream* 
+ */
 static InputStream *get_input_stream(OutputStream *ost)
 {
     if (ost->source_index >= 0)
         return input_streams[ost->source_index];
     return NULL;
 }
-
+/**
+ * @brief 
+ * 
+ * @param a 
+ * @param b 
+ * @return int 
+ */
 static int compare_int64(const void *a, const void *b)
 {
     return FFDIFFSIGN(*(const int64_t *)a, *(const int64_t *)b);
 }
 
+/**
+ * @brief 
+ * 
+ * @param of 
+ * @param file_index 
+ * @return int 
+ */
 /* open the muxer when all the streams are initialized */
 static int check_init_output_file(OutputFile *of, int file_index)
 {
@@ -3013,7 +3304,12 @@ static int check_init_output_file(OutputFile *of, int file_index)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @return int 
+ */
 static int init_output_bsfs(OutputStream *ost)
 {
     AVBSFContext *ctx;
@@ -3049,7 +3345,12 @@ static int init_output_bsfs(OutputStream *ost)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @return int 
+ */
 static int init_output_stream_streamcopy(OutputStream *ost)
 {
     OutputFile *of = output_files[ost->file_index];
@@ -3163,7 +3464,12 @@ static int init_output_stream_streamcopy(OutputStream *ost)
 
     return 0;
 }
-
+/**
+ * @brief 设置编码器id
+ * 
+ * @param of 
+ * @param ost 
+ */
 static void set_encoder_id(OutputFile *of, OutputStream *ost)
 {
     AVDictionaryEntry *e;
@@ -3204,7 +3510,13 @@ static void set_encoder_id(OutputFile *of, OutputStream *ost)
     av_dict_set(&ost->st->metadata, "encoder",  encoder_string,
                 AV_DICT_DONT_STRDUP_VAL | AV_DICT_DONT_OVERWRITE);
 }
-
+/**
+ * @brief 
+ * 
+ * @param kf 
+ * @param ost 
+ * @param avctx 
+ */
 static void parse_forced_key_frames(char *kf, OutputStream *ost,
                                     AVCodecContext *avctx)
 {
@@ -3267,7 +3579,12 @@ static void parse_forced_key_frames(char *kf, OutputStream *ost,
     ost->forced_kf_count = size;
     ost->forced_kf_pts   = pts;
 }
-
+/**
+ * @brief 初始化编码器时间
+ * 
+ * @param ost 
+ * @param default_time_base 
+ */
 static void init_encoder_time_base(OutputStream *ost, AVRational default_time_base)
 {
     InputStream *ist = get_input_stream(ost);
@@ -3291,7 +3608,12 @@ static void init_encoder_time_base(OutputStream *ost, AVRational default_time_ba
 
     enc_ctx->time_base = default_time_base;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @return int 
+ */
 static int init_output_stream_encode(OutputStream *ost)
 {
     InputStream *ist = get_input_stream(ost);
@@ -3449,7 +3771,14 @@ static int init_output_stream_encode(OutputStream *ost)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param ost 
+ * @param error 
+ * @param error_len 
+ * @return int 
+ */
 static int init_output_stream(OutputStream *ost, char *error, int error_len)
 {
     int ret = 0;
@@ -3644,7 +3973,12 @@ static int init_output_stream(OutputStream *ost, char *error, int error_len)
 
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param input_index 
+ * @param pkt 
+ */
 static void report_new_stream(int input_index, AVPacket *pkt)
 {
     InputFile *file = input_files[input_index];
@@ -3659,7 +3993,11 @@ static void report_new_stream(int input_index, AVPacket *pkt)
            pkt->pos, av_ts2timestr(pkt->dts, &st->time_base));
     file->nb_streams_warn = pkt->stream_index + 1;
 }
-
+/**
+ * @brief 转码初始化
+ * 
+ * @return int 
+ */
 static int transcode_init(void)
 {
     int ret = 0, i, j, k;
@@ -3832,6 +4170,11 @@ static int transcode_init(void)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 /* Return 1 if there remain streams where more output is wanted, 0 otherwise. */
 static int need_output(void)
 {
@@ -3859,9 +4202,9 @@ static int need_output(void)
 }
 
 /**
- * Select the output stream to process.
- *
- * @return  selected output stream, or NULL if none available
+ * @brief 选择输出
+ * 
+ * @return OutputStream* 
  */
 static OutputStream *choose_output(void)
 {
@@ -3889,7 +4232,11 @@ static OutputStream *choose_output(void)
     }
     return ost_min;
 }
-
+/**
+ * @brief Set the tty echo object
+ * 
+ * @param on 
+ */
 static void set_tty_echo(int on)
 {
 #if HAVE_TERMIOS_H
@@ -3901,7 +4248,12 @@ static void set_tty_echo(int on)
     }
 #endif
 }
-
+/**
+ * @brief 检测键盘中断
+ * 
+ * @param cur_time 
+ * @return int 
+ */
 static int check_keyboard_interaction(int64_t cur_time)
 {
     int i, ret, key;
@@ -4129,7 +4481,13 @@ static int get_input_packet_mt(InputFile *f, AVPacket *pkt)
                                         AV_THREAD_MESSAGE_NONBLOCK : 0);
 }
 #endif
-
+/**
+ * @brief Get the input packet object
+ * 
+ * @param f 
+ * @param pkt 
+ * @return int 
+ */
 static int get_input_packet(InputFile *f, AVPacket *pkt)
 {
     if (f->rate_emu) {
@@ -4149,7 +4507,11 @@ static int get_input_packet(InputFile *f, AVPacket *pkt)
 #endif
     return av_read_frame(f->ctx, pkt);
 }
-
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 static int got_eagain(void)
 {
     int i;
@@ -4158,7 +4520,10 @@ static int got_eagain(void)
             return 1;
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ */
 static void reset_eagain(void)
 {
     int i;
@@ -4168,6 +4533,15 @@ static void reset_eagain(void)
         output_streams[i]->unavailable = 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @param tmp 
+ * @param duration 
+ * @param tmp_time_base 
+ * @param time_base 
+ * @return AVRational 
+ */
 // set duration to max(tmp, duration) in a proper time base and return duration's time_base
 static AVRational duration_max(int64_t tmp, int64_t *duration, AVRational tmp_time_base,
                                AVRational time_base)
@@ -4187,7 +4561,13 @@ static AVRational duration_max(int64_t tmp, int64_t *duration, AVRational tmp_ti
 
     return time_base;
 }
-
+/**
+ * @brief 查找开始
+ * 
+ * @param ifile 
+ * @param is 
+ * @return int 
+ */
 static int seek_to_start(InputFile *ifile, AVFormatContext *is)
 {
     InputStream *ist;
@@ -4246,6 +4626,12 @@ static int seek_to_start(InputFile *ifile, AVFormatContext *is)
     return ret;
 }
 
+/**
+ * @brief 处理输入
+ * 
+ * @param file_index 
+ * @return int 
+ */
 /*
  * Return
  * - 0 -- one packet was read and processed
@@ -4524,6 +4910,13 @@ discard_packet:
 }
 
 /**
+ * @brief 
+ * 
+ * @param graph 
+ * @param best_ist 
+ * @return int 
+ */
+/**
  * Perform a step of transcoding for the specified filter graph.
  *
  * @param[in]  graph     filter graph to consider
@@ -4571,6 +4964,11 @@ static int transcode_from_filter(FilterGraph *graph, InputStream **best_ist)
     return 0;
 }
 
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 /**
  * Run a single step of transcoding.
  *
@@ -4648,6 +5046,11 @@ static int transcode_step(void)
     return reap_filters(0);
 }
 
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 /*
  * The following code is the main loop of the file converter
  */
@@ -4791,7 +5194,11 @@ static int transcode(void)
     }
     return ret;
 }
-
+/**
+ * @brief 获取基准时间戳
+ * 
+ * @return BenchmarkTimeStamps 
+ */
 static BenchmarkTimeStamps get_benchmark_time_stamps(void)
 {
     BenchmarkTimeStamps time_stamps = { av_gettime_relative() };
@@ -4817,7 +5224,11 @@ static BenchmarkTimeStamps get_benchmark_time_stamps(void)
 #endif
     return time_stamps;
 }
-
+/**
+ * @brief 
+ * 
+ * @return int64_t 
+ */
 static int64_t getmaxrss(void)
 {
 #if HAVE_GETRUSAGE && HAVE_STRUCT_RUSAGE_RU_MAXRSS
@@ -4835,20 +5246,33 @@ static int64_t getmaxrss(void)
     return 0;
 #endif
 }
-
+/**
+ * @brief 
+ * 
+ * @param ptr 
+ * @param level 
+ * @param fmt 
+ * @param vl 
+ */
 static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
 {
 }
-
+/**
+ * @brief ffmpeg的主程序
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char **argv)
 {
     int i, ret;
     BenchmarkTimeStamps ti;
-
+    //初始化后动态加载针对于Windows
     init_dynload();
-
+    //注册退出回调函数
     register_exit(ffmpeg_cleanup);
-
+    //针对Windows使用，把缓存区和流相关提高效率
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
 
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
@@ -4865,14 +5289,14 @@ int main(int argc, char **argv)
     avdevice_register_all();
 #endif
     avformat_network_init();
-
+    //显示相关信息
     show_banner(argc, argv, options);
 
-    /* parse options and open all input/output files */
+    //获取参数命令
     ret = ffmpeg_parse_options(argc, argv);
     if (ret < 0)
         exit_program(1);
-
+    //
     if (nb_output_files <= 0 && nb_input_files == 0) {
         show_usage();
         av_log(NULL, AV_LOG_WARNING, "Use -h to get full help or, even better, run 'man %s'\n", program_name);
@@ -4880,19 +5304,22 @@ int main(int argc, char **argv)
     }
 
     /* file converter / grab */
+    //输出文件小于等于0
     if (nb_output_files <= 0) {
         av_log(NULL, AV_LOG_FATAL, "At least one output file must be specified\n");
         exit_program(1);
     }
-
+    //
     for (i = 0; i < nb_output_files; i++) {
         if (strcmp(output_files[i]->ctx->oformat->name, "rtp"))
             want_sdp = 0;
     }
-
+    //获取当前的时间
     current_time = ti = get_benchmark_time_stamps();
+    //
     if (transcode() < 0)
         exit_program(1);
+    //
     if (do_benchmark) {
         int64_t utime, stime, rtime;
         current_time = get_benchmark_time_stamps();
@@ -4905,9 +5332,10 @@ int main(int argc, char **argv)
     }
     av_log(NULL, AV_LOG_DEBUG, "%"PRIu64" frames successfully decoded, %"PRIu64" decoding errors\n",
            decode_error_stat[0], decode_error_stat[1]);
+    //
     if ((decode_error_stat[0] + decode_error_stat[1]) * max_error_rate < decode_error_stat[1])
         exit_program(69);
-
+    //
     exit_program(received_nb_signals ? 255 : main_return_code);
     return main_return_code;
 }
