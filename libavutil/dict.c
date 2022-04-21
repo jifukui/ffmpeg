@@ -26,47 +26,79 @@
 #include "mem.h"
 #include "time_internal.h"
 #include "bprint.h"
-
+/**
+ * @brief 
+ * 字典结构
+ */
 struct AVDictionary {
     int count;
     AVDictionaryEntry *elems;
 };
-
+/**
+ * @brief 
+ * 获取字典对象的数量
+ * @param m 字典对象
+ * @return int 返回字典中数据的数量
+ */
 int av_dict_count(const AVDictionary *m)
 {
     return m ? m->count : 0;
 }
-
+/**
+ * @brief 
+ * 从字典对象中获取值
+ * @param m 字典对象
+ * @param key 键名
+ * @param prev 开始位置
+ * @param flags 匹配模式
+ * @return AVDictionaryEntry* 
+ */
 AVDictionaryEntry *av_dict_get(const AVDictionary *m, const char *key,
                                const AVDictionaryEntry *prev, int flags)
 {
     unsigned int i, j;
 
-    if (!m)
+    if (!m){
         return NULL;
+    }
 
-    if (prev)
+    if (prev){
         i = prev - m->elems + 1;
-    else
+    }
+    else{
         i = 0;
+    }
+        
 
     for (; i < m->count; i++) {
         const char *s = m->elems[i].key;
-        if (flags & AV_DICT_MATCH_CASE)
+        if (flags & AV_DICT_MATCH_CASE){
             for (j = 0; s[j] == key[j] && key[j]; j++)
                 ;
-        else
+        }
+        else{
             for (j = 0; av_toupper(s[j]) == av_toupper(key[j]) && key[j]; j++)
                 ;
-        if (key[j])
+        }
+        if (key[j]){
             continue;
-        if (s[j] && !(flags & AV_DICT_IGNORE_SUFFIX))
+        }
+        if (s[j] && !(flags & AV_DICT_IGNORE_SUFFIX)){
             continue;
+        }
         return &m->elems[i];
     }
     return NULL;
 }
-
+/**
+ * @brief 
+ * 设置字典的键和值
+ * @param pm 字典
+ * @param key 键
+ * @param value 值
+ * @param flags 标记
+ * @return int 返回字典插入的位置
+ */
 int av_dict_set(AVDictionary **pm, const char *key, const char *value,
                 int flags)
 {
@@ -143,7 +175,15 @@ err_out:
     av_free(copy_value);
     return AVERROR(ENOMEM);
 }
-
+/**
+ * @brief 
+ * 字典插入的值为整数
+ * @param pm 
+ * @param key 
+ * @param value 
+ * @param flags 
+ * @return int 
+ */
 int av_dict_set_int(AVDictionary **pm, const char *key, int64_t value,
                 int flags)
 {
@@ -152,7 +192,16 @@ int av_dict_set_int(AVDictionary **pm, const char *key, int64_t value,
     flags &= ~AV_DICT_DONT_STRDUP_VAL;
     return av_dict_set(pm, key, valuestr, flags);
 }
-
+/**
+ * @brief 
+ * 解析键值对
+ * @param pm 
+ * @param buf 
+ * @param key_val_sep 
+ * @param pairs_sep 
+ * @param flags 
+ * @return int 
+ */
 static int parse_key_value_pair(AVDictionary **pm, const char **buf,
                                 const char *key_val_sep, const char *pairs_sep,
                                 int flags)
@@ -176,7 +225,16 @@ static int parse_key_value_pair(AVDictionary **pm, const char **buf,
 
     return ret;
 }
-
+/**
+ * @brief 
+ * 解析字符串
+ * @param pm 
+ * @param str 
+ * @param key_val_sep 
+ * @param pairs_sep 
+ * @param flags 
+ * @return int 
+ */
 int av_dict_parse_string(AVDictionary **pm, const char *str,
                          const char *key_val_sep, const char *pairs_sep,
                          int flags)
@@ -199,7 +257,11 @@ int av_dict_parse_string(AVDictionary **pm, const char *str,
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 字典释放内存
+ * @param pm 
+ */
 void av_dict_free(AVDictionary **pm)
 {
     AVDictionary *m = *pm;
@@ -213,7 +275,14 @@ void av_dict_free(AVDictionary **pm)
     }
     av_freep(pm);
 }
-
+/**
+ * @brief 
+ * 字典拷贝
+ * @param dst 
+ * @param src 
+ * @param flags 
+ * @return int 
+ */
 int av_dict_copy(AVDictionary **dst, const AVDictionary *src, int flags)
 {
     AVDictionaryEntry *t = NULL;
@@ -226,7 +295,15 @@ int av_dict_copy(AVDictionary **dst, const AVDictionary *src, int flags)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param m 
+ * @param buffer 
+ * @param key_val_sep 
+ * @param pairs_sep 
+ * @return int 
+ */
 int av_dict_get_string(const AVDictionary *m, char **buffer,
                        const char key_val_sep, const char pairs_sep)
 {
