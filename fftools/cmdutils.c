@@ -254,9 +254,16 @@ void show_help_children(const AVClass *class, int flags)
     while (child = av_opt_child_class_next(class, child))
         show_help_children(child, flags);
 }
-
+/**
+ * @brief 
+ * 查找指令
+ * @param po 指令数组
+ * @param name 指令名称
+ * @return const OptionDef* 
+ */
 static const OptionDef *find_option(const OptionDef *po, const char *name)
 {
+    //查找出现字符：的位置
     const char *p = strchr(name, ':');
     int len = p ? p - name : strlen(name);
 
@@ -507,7 +514,15 @@ int parse_optgroup(void *optctx, OptionGroup *g)
 
     return 0;
 }
-
+/**
+ * @brief 
+ * 本地参数解析
+ * @param argc 
+ * @param argv 
+ * @param options 
+ * @param optname 
+ * @return int 
+ */
 int locate_option(int argc, char **argv, const OptionDef *options,
                   const char *optname)
 {
@@ -519,7 +534,7 @@ int locate_option(int argc, char **argv, const OptionDef *options,
 
         if (*cur_opt++ != '-')
             continue;
-
+        //查找指令是否存在
         po = find_option(options, cur_opt);
         if (!po->name && cur_opt[0] == 'n' && cur_opt[1] == 'o')
             po = find_option(options, cur_opt + 2);

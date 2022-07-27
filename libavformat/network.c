@@ -27,7 +27,11 @@
 #include "libavutil/avassert.h"
 #include "libavutil/mem.h"
 #include "libavutil/time.h"
-
+/**
+ * @brief 
+ * 
+ * @return int 
+ */
 int ff_tls_init(void)
 {
 #if CONFIG_TLS_PROTOCOL
@@ -54,10 +58,15 @@ void ff_tls_deinit(void)
 #endif
 #endif
 }
-
+/**
+ * @brief 
+ * 网络初始化
+ * @return int 
+ */
 int ff_network_init(void)
 {
 #if HAVE_WINSOCK2_H
+    //对于是window系统的处理
     WSADATA wsaData;
 
     if (WSAStartup(MAKEWORD(1,1), &wsaData))

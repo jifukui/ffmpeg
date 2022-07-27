@@ -4081,8 +4081,9 @@ int main(int argc, char **argv)
     VideoState *is;
     //初始化动态库加载，对于linux没有作用
     init_dynload();
-    //设置日志
+    //设置日志模式
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
+    //解析日志等级
     parse_loglevel(argc, argv, options);
 
     /* register all codecs, demux and protocols */
