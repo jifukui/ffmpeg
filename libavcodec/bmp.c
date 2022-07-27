@@ -26,7 +26,15 @@
 #include "bmp.h"
 #include "internal.h"
 #include "msrledec.h"
-
+/**
+ * @brief 
+ * 位图解码帧
+ * @param avctx 
+ * @param data 
+ * @param got_frame 
+ * @param avpkt 
+ * @return int 
+ */
 static int bmp_decode_frame(AVCodecContext *avctx,
                             void *data, int *got_frame,
                             AVPacket *avpkt)

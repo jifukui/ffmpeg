@@ -77,7 +77,10 @@
 #define AV_DICT_APPEND         32   /**< If the entry already exists, append to it.  Note that no
                                       delimiter is added, the strings are simply concatenated. */
 #define AV_DICT_MULTIKEY       64   /**< Allow to store several equal keys in the dictionary */
-
+/**
+ * @brief 
+ * 字典结构
+ */
 typedef struct AVDictionaryEntry {
     char *key;
     char *value;

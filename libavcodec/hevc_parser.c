@@ -51,7 +51,9 @@ typedef struct HEVCParserContext {
     int poc;
     int pocTid0;
 } HEVCParserContext;
-
+/**
+ * 处理切片头
+*/
 static int hevc_parse_slice_header(AVCodecParserContext *s, H2645NAL *nal,
                                    AVCodecContext *avctx)
 {
@@ -178,6 +180,9 @@ static int hevc_parse_slice_header(AVCodecParserContext *s, H2645NAL *nal,
  * @param buf buffer with field/frame data.
  * @param buf_size size of the buffer.
  */
+/**
+ * 处理NAL单元
+*/
 static int parse_nal_units(AVCodecParserContext *s, const uint8_t *buf,
                            int buf_size, AVCodecContext *avctx)
 {
@@ -196,7 +201,9 @@ static int parse_nal_units(AVCodecParserContext *s, const uint8_t *buf,
     ret = ff_h2645_packet_split(&ctx->pkt, buf, buf_size, avctx, ctx->is_avc,
                                 ctx->nal_length_size, AV_CODEC_ID_HEVC, 1, 0);
     if (ret < 0)
+    {
         return ret;
+    }
 
     for (i = 0; i < ctx->pkt.nb_nals; i++) {
         H2645NAL *nal = &ctx->pkt.nals[i];

@@ -51,7 +51,9 @@ DECLARE_ALIGNED(8, const uint8_t, ff_dither_8x8_128)[9][8] = {
 DECLARE_ALIGNED(8, static const uint8_t, sws_pb_64)[8] = {
     64, 64, 64, 64, 64, 64, 64, 64
 };
-
+/**
+ * 
+*/
 static av_always_inline void fillPlane(uint8_t *plane, int stride, int width,
                                        int height, int y, uint8_t val)
 {
@@ -756,6 +758,7 @@ static void rgb48Toxyz12(struct SwsContext *c, uint16_t *dst,
  * swscale wrapper, so we don't need to export the SwsContext.
  * Assumes planar YUV to be in YUV order instead of YVU.
  */
+/***/
 int attribute_align_arg sws_scale(struct SwsContext *c,
                                   const uint8_t * const srcSlice[],
                                   const int srcStride[], int srcSliceY,

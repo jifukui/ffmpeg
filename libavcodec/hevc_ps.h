@@ -191,7 +191,7 @@ typedef struct PTL {
     uint8_t sub_layer_profile_present_flag[HEVC_MAX_SUB_LAYERS];
     uint8_t sub_layer_level_present_flag[HEVC_MAX_SUB_LAYERS];
 } PTL;
-
+/**VPS数据结构*/
 typedef struct HEVCVPS {
     uint8_t vps_temporal_id_nesting_flag;
     int vps_max_layers;

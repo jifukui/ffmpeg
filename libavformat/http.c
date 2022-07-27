@@ -176,7 +176,12 @@ static int http_connect(URLContext *h, const char *path, const char *local_path,
                         const char *proxyauth, int *new_location);
 static int http_read_header(URLContext *h, int *new_location);
 static int http_shutdown(URLContext *h, int flags);
-
+/**
+ * @brief 
+ * 初始化安全状态
+ * @param dest 
+ * @param src 
+ */
 void ff_http_init_auth_state(URLContext *dest, const URLContext *src)
 {
     memcpy(&((HTTPContext *)dest->priv_data)->auth_state,
@@ -304,7 +309,13 @@ fail:
         return location_changed;
     return ff_http_averror(s->http_code, AVERROR(EIO));
 }
-
+/**
+ * @brief 
+ * 执行新的请求
+ * @param h 
+ * @param uri 
+ * @return int 
+ */
 int ff_http_do_new_request(URLContext *h, const char *uri)
 {
     HTTPContext *s = h->priv_data;
@@ -355,7 +366,13 @@ int ff_http_do_new_request(URLContext *h, const char *uri)
     av_dict_free(&options);
     return ret;
 }
-
+/**
+ * @brief 
+ * 错误处理
+ * @param status_code 
+ * @param default_averror 
+ * @return int 
+ */
 int ff_http_averror(int status_code, int default_averror)
 {
     switch (status_code) {
@@ -372,7 +389,13 @@ int ff_http_averror(int status_code, int default_averror)
     else
         return default_averror;
 }
-
+/**
+ * @brief 
+ * 
+ * @param h 
+ * @param status_code 
+ * @return int 
+ */
 static int http_write_reply(URLContext* h, int status_code)
 {
     int ret, body = 0, reply_code, message_len;
@@ -446,13 +469,23 @@ static int http_write_reply(URLContext* h, int status_code)
         return ret;
     return 0;
 }
-
+/**
+ * @brief 
+ * 处理HTTP错误
+ * @param h 
+ * @param error 
+ */
 static void handle_http_errors(URLContext *h, int error)
 {
     av_assert0(error < 0);
     http_write_reply(h, error);
 }
-
+/**
+ * @brief 
+ * http握手
+ * @param c 
+ * @return int 
+ */
 static int http_handshake(URLContext *c)
 {
     int ret, err, new_location;
@@ -488,7 +521,15 @@ static int http_handshake(URLContext *c)
     // this should never be reached.
     return AVERROR(EINVAL);
 }
-
+/**
+ * @brief 
+ * http监听
+ * @param h 
+ * @param uri 
+ * @param flags 
+ * @param options 
+ * @return int 
+ */
 static int http_listen(URLContext *h, const char *uri, int flags,
                        AVDictionary **options) {
     HTTPContext *s = h->priv_data;
@@ -519,7 +560,15 @@ fail:
     av_dict_free(&s->chained_options);
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param h 
+ * @param uri 
+ * @param flags 
+ * @param options 
+ * @return int 
+ */
 static int http_open(URLContext *h, const char *uri, int flags,
                      AVDictionary **options)
 {
@@ -1647,7 +1696,12 @@ static int http_shutdown(URLContext *h, int flags)
 
     return ret;
 }
-
+/**
+ * @brief 
+ * 关闭HTTP链接
+ * @param h 
+ * @return int 
+ */
 static int http_close(URLContext *h)
 {
     int ret = 0;
@@ -1660,10 +1714,13 @@ static int http_close(URLContext *h)
 
     if (s->hd && !s->end_chunked_post)
         /* Close the write direction by sending the end of chunked encoding. */
+    {
         ret = http_shutdown(h, h->flags);
+    }
 
-    if (s->hd)
+    if (s->hd){
         ffurl_closep(&s->hd);
+    }
     av_dict_free(&s->chained_options);
     return ret;
 }

@@ -199,7 +199,10 @@ typedef struct Decoder {
     AVRational next_pts_tb;
     SDL_Thread *decoder_tid;
 } Decoder;
-
+/**
+ * @brief 
+ * 视频状态结构体
+ */
 typedef struct VideoState {
     SDL_Thread *read_tid;
     AVInputFormat *iformat;
@@ -414,7 +417,13 @@ int cmp_audio_fmts(enum AVSampleFormat fmt1, int64_t channel_count1,
     else
         return channel_count1 != channel_count2 || fmt1 != fmt2;
 }
-
+/**
+ * @brief Get the valid channel layout object
+ * 获取合法通道的延迟结构体
+ * @param channel_layout 
+ * @param channels 
+ * @return int64_t 
+ */
 static inline
 int64_t get_valid_channel_layout(int64_t channel_layout, int channels)
 {
@@ -577,7 +586,14 @@ static int packet_queue_get(PacketQueue *q, AVPacket *pkt, int block, int *seria
     SDL_UnlockMutex(q->mutex);
     return ret;
 }
-
+/**
+ * @brief 
+ * 解码器初始化
+ * @param d 
+ * @param avctx 
+ * @param queue 
+ * @param empty_queue_cond 
+ */
 static void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, SDL_cond *empty_queue_cond) {
     memset(d, 0, sizeof(Decoder));
     d->avctx = avctx;
@@ -586,7 +602,14 @@ static void decoder_init(Decoder *d, AVCodecContext *avctx, PacketQueue *queue, 
     d->start_pts = AV_NOPTS_VALUE;
     d->pkt_serial = -1;
 }
-
+/**
+ * @brief 
+ * 解码器解码格式
+ * @param d 
+ * @param frame 
+ * @param sub 
+ * @return int 
+ */
 static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
     int ret = AVERROR(EAGAIN);
 
@@ -675,7 +698,11 @@ static int decoder_decode_frame(Decoder *d, AVFrame *frame, AVSubtitle *sub) {
         }
     }
 }
-
+/**
+ * @brief 
+ * 解码器销毁
+ * @param d 
+ */
 static void decoder_destroy(Decoder *d) {
     av_packet_unref(&d->pkt);
     avcodec_free_context(&d->avctx);
@@ -686,7 +713,15 @@ static void frame_queue_unref_item(Frame *vp)
     av_frame_unref(vp->frame);
     avsubtitle_free(&vp->sub);
 }
-
+/**
+ * @brief 
+ * 帧队列初始化
+ * @param f 
+ * @param pktq 
+ * @param max_size 
+ * @param keep_last 
+ * @return int 
+ */
 static int frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_size, int keep_last)
 {
     int i;
@@ -707,7 +742,11 @@ static int frame_queue_init(FrameQueue *f, PacketQueue *pktq, int max_size, int 
             return AVERROR(ENOMEM);
     return 0;
 }
-
+/**
+ * @brief 
+ * 帧队列销毁
+ * @param f 
+ */
 static void frame_queue_destory(FrameQueue *f)
 {
     int i;
@@ -800,6 +839,12 @@ static void frame_queue_next(FrameQueue *f)
 }
 
 /* return the number of undisplayed frames in the queue */
+/**
+ * @brief 
+ * 帧队列中没有显示的帧的数量
+ * @param f 
+ * @return int 
+ */
 static int frame_queue_nb_remaining(FrameQueue *f)
 {
     return f->size - f->rindex_shown;
@@ -954,7 +999,11 @@ static int upload_texture(SDL_Texture **tex, AVFrame *frame, struct SwsContext *
     }
     return ret;
 }
-
+/**
+ * @brief Set the sdl yuv conversion mode object
+ * 设置sdl的yuv转换模式
+ * @param frame 
+ */
 static void set_sdl_yuv_conversion_mode(AVFrame *frame)
 {
 #if SDL_VERSION_ATLEAST(2,0,8)
@@ -970,7 +1019,11 @@ static void set_sdl_yuv_conversion_mode(AVFrame *frame)
     SDL_SetYUVConversionMode(mode);
 #endif
 }
-
+/**
+ * @brief 
+ * 视频图像显示
+ * @param is 
+ */
 static void video_image_display(VideoState *is)
 {
     Frame *vp;
@@ -1058,7 +1111,11 @@ static inline int compute_mod(int a, int b)
 {
     return a < 0 ? a%b + b : a%b;
 }
-
+/**
+ * @brief 
+ * 视频音频播放
+ * @param s 
+ */
 static void video_audio_display(VideoState *s)
 {
     int i, i_start, x, y1, y, ys, delay, n, nb_display_channels;
@@ -1200,7 +1257,12 @@ static void video_audio_display(VideoState *s)
             s->xpos= s->xleft;
     }
 }
-
+/**
+ * @brief 
+ * 流内容关闭
+ * @param is 
+ * @param stream_index 
+ */
 static void stream_component_close(VideoState *is, int stream_index)
 {
     AVFormatContext *ic = is->ic;
@@ -1257,7 +1319,11 @@ static void stream_component_close(VideoState *is, int stream_index)
         break;
     }
 }
-
+/**
+ * @brief 
+ * 流关闭
+ * @param is 
+ */
 static void stream_close(VideoState *is)
 {
     /* XXX: use a special url_shutdown call to abort parse cleanly */
@@ -1294,7 +1360,11 @@ static void stream_close(VideoState *is)
         SDL_DestroyTexture(is->sub_texture);
     av_free(is);
 }
-
+/**
+ * @brief 
+ * 退出
+ * @param is 
+ */
 static void do_exit(VideoState *is)
 {
     if (is) {
@@ -1315,12 +1385,22 @@ static void do_exit(VideoState *is)
     av_log(NULL, AV_LOG_QUIET, "%s", "");
     exit(0);
 }
-
+/**
+ * @brief 
+ * term信号处理
+ * @param sig 
+ */
 static void sigterm_handler(int sig)
 {
     exit(123);
 }
-
+/**
+ * @brief Set the default window size object
+ * 设置默认窗口大小
+ * @param width 
+ * @param height 
+ * @param sar 
+ */
 static void set_default_window_size(int width, int height, AVRational sar)
 {
     SDL_Rect rect;
@@ -1332,7 +1412,12 @@ static void set_default_window_size(int width, int height, AVRational sar)
     default_width  = rect.w;
     default_height = rect.h;
 }
-
+/**
+ * @brief 
+ * 视频打开
+ * @param is 
+ * @return int 
+ */
 static int video_open(VideoState *is)
 {
     int w,h;
@@ -1357,6 +1442,11 @@ static int video_open(VideoState *is)
 }
 
 /* display the current picture, if any */
+/**
+ * @brief 
+ * 视频显示
+ * @param is 
+ */
 static void video_display(VideoState *is)
 {
     if (!is->width)
@@ -1370,7 +1460,12 @@ static void video_display(VideoState *is)
         video_image_display(is);
     SDL_RenderPresent(renderer);
 }
-
+/**
+ * @brief Get the clock object
+ * 获取时钟
+ * @param c 
+ * @return double 
+ */
 static double get_clock(Clock *c)
 {
     if (*c->queue_serial != c->serial)
@@ -1382,7 +1477,14 @@ static double get_clock(Clock *c)
         return c->pts_drift + time - (time - c->last_updated) * (1.0 - c->speed);
     }
 }
-
+/**
+ * @brief Set the clock at object
+ * 设置时钟
+ * @param c 
+ * @param pts 
+ * @param serial 
+ * @param time 
+ */
 static void set_clock_at(Clock *c, double pts, int serial, double time)
 {
     c->pts = pts;
@@ -1390,19 +1492,35 @@ static void set_clock_at(Clock *c, double pts, int serial, double time)
     c->pts_drift = c->pts - time;
     c->serial = serial;
 }
-
+/**
+ * @brief Set the clock object
+ * 设置时钟
+ * @param c 
+ * @param pts 
+ * @param serial 
+ */
 static void set_clock(Clock *c, double pts, int serial)
 {
     double time = av_gettime_relative() / 1000000.0;
     set_clock_at(c, pts, serial, time);
 }
-
+/**
+ * @brief Set the clock speed object
+ * 设置时钟速率
+ * @param c 
+ * @param speed 
+ */
 static void set_clock_speed(Clock *c, double speed)
 {
     set_clock(c, get_clock(c), c->serial);
     c->speed = speed;
 }
-
+/**
+ * @brief 
+ * 初始化时钟
+ * @param c 
+ * @param queue_serial 
+ */
 static void init_clock(Clock *c, int *queue_serial)
 {
     c->speed = 1.0;
@@ -1410,7 +1528,12 @@ static void init_clock(Clock *c, int *queue_serial)
     c->queue_serial = queue_serial;
     set_clock(c, NAN, -1);
 }
-
+/**
+ * @brief 
+ * 同步时钟并保存
+ * @param c 
+ * @param slave 
+ */
 static void sync_clock_to_slave(Clock *c, Clock *slave)
 {
     double clock = get_clock(c);
@@ -1418,7 +1541,12 @@ static void sync_clock_to_slave(Clock *c, Clock *slave)
     if (!isnan(slave_clock) && (isnan(clock) || fabs(clock - slave_clock) > AV_NOSYNC_THRESHOLD))
         set_clock(c, slave_clock, slave->serial);
 }
-
+/**
+ * @brief Get the master sync type object
+ * 获取主同步类型
+ * @param is 
+ * @return int 
+ */
 static int get_master_sync_type(VideoState *is) {
     if (is->av_sync_type == AV_SYNC_VIDEO_MASTER) {
         if (is->video_st)
@@ -1436,6 +1564,12 @@ static int get_master_sync_type(VideoState *is) {
 }
 
 /* get the current master clock value */
+/**
+ * @brief Get the master clock object
+ * 获取主时钟对象
+ * @param is 
+ * @return double 
+ */
 static double get_master_clock(VideoState *is)
 {
     double val;
@@ -1453,7 +1587,11 @@ static double get_master_clock(VideoState *is)
     }
     return val;
 }
-
+/**
+ * @brief 
+ * 检测外部时钟速度
+ * @param is 
+ */
 static void check_external_clock_speed(VideoState *is) {
    if (is->video_stream >= 0 && is->videoq.nb_packets <= EXTERNAL_CLOCK_MIN_FRAMES ||
        is->audio_stream >= 0 && is->audioq.nb_packets <= EXTERNAL_CLOCK_MIN_FRAMES) {
@@ -1483,6 +1621,11 @@ static void stream_seek(VideoState *is, int64_t pos, int64_t rel, int seek_by_by
 }
 
 /* pause or resume the video */
+/**
+ * @brief 
+ * 流数据暂停
+ * @param is 
+ */
 static void stream_toggle_pause(VideoState *is)
 {
     if (is->paused) {
@@ -1495,25 +1638,43 @@ static void stream_toggle_pause(VideoState *is)
     set_clock(&is->extclk, get_clock(&is->extclk), is->extclk.serial);
     is->paused = is->audclk.paused = is->vidclk.paused = is->extclk.paused = !is->paused;
 }
-
+/**
+ * @brief 
+ * 暂停开关
+ * @param is 
+ */
 static void toggle_pause(VideoState *is)
 {
     stream_toggle_pause(is);
     is->step = 0;
 }
-
+/**
+ * @brief 
+ * 静音开关
+ * @param is 
+ */
 static void toggle_mute(VideoState *is)
 {
     is->muted = !is->muted;
 }
-
+/**
+ * @brief 
+ * 更新音量
+ * @param is 
+ * @param sign 
+ * @param step 
+ */
 static void update_volume(VideoState *is, int sign, double step)
 {
     double volume_level = is->audio_volume ? (20 * log(is->audio_volume / (double)SDL_MIX_MAXVOLUME) / log(10)) : -1000.0;
     int new_volume = lrint(SDL_MIX_MAXVOLUME * pow(10.0, (volume_level + sign * step) / 20.0));
     is->audio_volume = av_clip(is->audio_volume == new_volume ? (is->audio_volume + sign) : new_volume, 0, SDL_MIX_MAXVOLUME);
 }
-
+/**
+ * @brief 
+ * 跳到下一帧
+ * @param is 
+ */
 static void step_to_next_frame(VideoState *is)
 {
     /* if the stream is paused unpause it, then step */
@@ -1521,7 +1682,13 @@ static void step_to_next_frame(VideoState *is)
         stream_toggle_pause(is);
     is->step = 1;
 }
-
+/**
+ * @brief 
+ * 计算目标延迟
+ * @param delay 
+ * @param is 
+ * @return double 
+ */
 static double compute_target_delay(double delay, VideoState *is)
 {
     double sync_threshold, diff = 0;
@@ -1551,7 +1718,14 @@ static double compute_target_delay(double delay, VideoState *is)
 
     return delay;
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param vp 
+ * @param nextvp 
+ * @return double 
+ */
 static double vp_duration(VideoState *is, Frame *vp, Frame *nextvp) {
     if (vp->serial == nextvp->serial) {
         double duration = nextvp->pts - vp->pts;
@@ -1563,7 +1737,14 @@ static double vp_duration(VideoState *is, Frame *vp, Frame *nextvp) {
         return 0.0;
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param pts 
+ * @param pos 
+ * @param serial 
+ */
 static void update_video_pts(VideoState *is, double pts, int64_t pos, int serial) {
     /* update current video pts */
     set_clock(&is->vidclk, pts, serial);
@@ -1571,6 +1752,12 @@ static void update_video_pts(VideoState *is, double pts, int64_t pos, int serial
 }
 
 /* called to display each frame */
+/**
+ * @brief 
+ * 
+ * @param opaque 
+ * @param remaining_time 
+ */
 static void video_refresh(void *opaque, double *remaining_time)
 {
     VideoState *is = opaque;
@@ -1728,7 +1915,17 @@ display:
         }
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param src_frame 
+ * @param pts 
+ * @param duration 
+ * @param pos 
+ * @param serial 
+ * @return int 
+ */
 static int queue_picture(VideoState *is, AVFrame *src_frame, double pts, double duration, int64_t pos, int serial)
 {
     Frame *vp;
@@ -1759,7 +1956,13 @@ static int queue_picture(VideoState *is, AVFrame *src_frame, double pts, double 
     frame_queue_push(&is->pictq);
     return 0;
 }
-
+/**
+ * @brief Get the video frame object
+ * 
+ * @param is 
+ * @param frame 
+ * @return int 
+ */
 static int get_video_frame(VideoState *is, AVFrame *frame)
 {
     int got_picture;
@@ -1794,6 +1997,15 @@ static int get_video_frame(VideoState *is, AVFrame *frame)
 }
 
 #if CONFIG_AVFILTER
+/**
+ * @brief 
+ * 
+ * @param graph 
+ * @param filtergraph 
+ * @param source_ctx 
+ * @param sink_ctx 
+ * @return int 
+ */
 static int configure_filtergraph(AVFilterGraph *graph, const char *filtergraph,
                                  AVFilterContext *source_ctx, AVFilterContext *sink_ctx)
 {
@@ -1836,7 +2048,15 @@ fail:
     avfilter_inout_free(&inputs);
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param graph 
+ * @param is 
+ * @param vfilters 
+ * @param frame 
+ * @return int 
+ */
 static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const char *vfilters, AVFrame *frame)
 {
     enum AVPixelFormat pix_fmts[FF_ARRAY_ELEMS(sdl_texture_format_map)];
@@ -1940,7 +2160,14 @@ static int configure_video_filters(AVFilterGraph *graph, VideoState *is, const c
 fail:
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param afilters 
+ * @param force_output_format 
+ * @return int 
+ */
 static int configure_audio_filters(VideoState *is, const char *afilters, int force_output_format)
 {
     static const enum AVSampleFormat sample_fmts[] = { AV_SAMPLE_FMT_S16, AV_SAMPLE_FMT_NONE };
@@ -2018,7 +2245,12 @@ end:
     return ret;
 }
 #endif  /* CONFIG_AVFILTER */
-
+/**
+ * @brief 
+ * 
+ * @param arg 
+ * @return int 
+ */
 static int audio_thread(void *arg)
 {
     VideoState *is = arg;
@@ -2105,7 +2337,15 @@ static int audio_thread(void *arg)
     av_frame_free(&frame);
     return ret;
 }
-
+/**
+ * @brief 
+ * 解码器开始
+ * @param d 
+ * @param fn 
+ * @param thread_name 
+ * @param arg 
+ * @return int 
+ */
 static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name, void* arg)
 {
     packet_queue_start(d->queue);
@@ -2116,7 +2356,12 @@ static int decoder_start(Decoder *d, int (*fn)(void *), const char *thread_name,
     }
     return 0;
 }
-
+/**
+ * @brief 
+ * 视频线程
+ * @param arg 
+ * @return int 
+ */
 static int video_thread(void *arg)
 {
     VideoState *is = arg;
@@ -2223,7 +2468,12 @@ static int video_thread(void *arg)
     av_frame_free(&frame);
     return 0;
 }
-
+/**
+ * @brief 
+ * 子标题线程
+ * @param arg 
+ * @return int 
+ */
 static int subtitle_thread(void *arg)
 {
     VideoState *is = arg;
@@ -2259,6 +2509,13 @@ static int subtitle_thread(void *arg)
 }
 
 /* copy samples for viewing in editor window */
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param samples 
+ * @param samples_size 
+ */
 static void update_sample_display(VideoState *is, short *samples, int samples_size)
 {
     int size, len;
@@ -2279,6 +2536,14 @@ static void update_sample_display(VideoState *is, short *samples, int samples_si
 
 /* return the wanted number of samples to get better sync if sync_type is video
  * or external master clock */
+
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param nb_samples 
+ * @return int 
+ */
 static int synchronize_audio(VideoState *is, int nb_samples)
 {
     int wanted_nb_samples = nb_samples;
@@ -2326,6 +2591,13 @@ static int synchronize_audio(VideoState *is, int nb_samples)
  * The processed audio frame is decoded, converted if required, and
  * stored in is->audio_buf, with size in bytes given by the return
  * value.
+ */
+
+/**
+ * @brief 
+ * 音频解码帧
+ * @param is 
+ * @return int 
  */
 static int audio_decode_frame(VideoState *is)
 {
@@ -2440,6 +2712,14 @@ static int audio_decode_frame(VideoState *is)
 }
 
 /* prepare a new audio buffer */
+
+/**
+ * @brief 
+ * 
+ * @param opaque 
+ * @param stream 
+ * @param len 
+ */
 static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
 {
     VideoState *is = opaque;
@@ -2483,6 +2763,16 @@ static void sdl_audio_callback(void *opaque, Uint8 *stream, int len)
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param opaque 
+ * @param wanted_channel_layout 
+ * @param wanted_nb_channels 
+ * @param wanted_sample_rate 
+ * @param audio_hw_params 
+ * @return int 
+ */
 static int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb_channels, int wanted_sample_rate, struct AudioParams *audio_hw_params)
 {
     SDL_AudioSpec wanted_spec, spec;
@@ -2557,6 +2847,14 @@ static int audio_open(void *opaque, int64_t wanted_channel_layout, int wanted_nb
 }
 
 /* open a given stream. Return 0 if OK */
+
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param stream_index 
+ * @return int 
+ */
 static int stream_component_open(VideoState *is, int stream_index)
 {
     AVFormatContext *ic = is->ic;
@@ -2708,6 +3006,8 @@ out:
 
     return ret;
 }
+
+
 
 static int decode_interrupt_cb(void *ctx)
 {
@@ -3194,13 +3494,21 @@ static void stream_cycle_channel(VideoState *is, int codec_type)
     stream_component_open(is, stream_index);
 }
 
-
+/**
+ * @brief 
+ * 全屏显示开关
+ * @param is 
+ */
 static void toggle_full_screen(VideoState *is)
 {
     is_full_screen = !is_full_screen;
     SDL_SetWindowFullscreen(window, is_full_screen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
-
+/**
+ * @brief 
+ * 开关音频播放
+ * @param is 
+ */
 static void toggle_audio_display(VideoState *is)
 {
     int next = is->show_mode;
@@ -3212,7 +3520,12 @@ static void toggle_audio_display(VideoState *is)
         is->show_mode = next;
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param event 
+ */
 static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
     double remaining_time = 0.0;
     SDL_PumpEvents();
@@ -3229,7 +3542,12 @@ static void refresh_loop_wait_event(VideoState *is, SDL_Event *event) {
         SDL_PumpEvents();
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param is 
+ * @param incr 
+ */
 static void seek_chapter(VideoState *is, int incr)
 {
     int64_t pos = get_master_clock(is) * AV_TIME_BASE;
@@ -3258,6 +3576,12 @@ static void seek_chapter(VideoState *is, int incr)
 }
 
 /* handle an event sent by the GUI */
+
+/**
+ * @brief 
+ * 
+ * @param cur_stream 
+ */
 static void event_loop(VideoState *cur_stream)
 {
     SDL_Event event;
@@ -3457,24 +3781,53 @@ static void event_loop(VideoState *cur_stream)
     }
 }
 
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_frame_size(void *optctx, const char *opt, const char *arg)
 {
     av_log(NULL, AV_LOG_WARNING, "Option -s is deprecated, use -video_size.\n");
     return opt_default(NULL, "video_size", arg);
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_width(void *optctx, const char *opt, const char *arg)
 {
     screen_width = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_height(void *optctx, const char *opt, const char *arg)
 {
     screen_height = parse_number_or_die(opt, arg, OPT_INT64, 1, INT_MAX);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_format(void *optctx, const char *opt, const char *arg)
 {
     file_iformat = av_find_input_format(arg);
@@ -3484,13 +3837,27 @@ static int opt_format(void *optctx, const char *opt, const char *arg)
     }
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_frame_pix_fmt(void *optctx, const char *opt, const char *arg)
 {
     av_log(NULL, AV_LOG_WARNING, "Option -pix_fmt is deprecated, use -pixel_format.\n");
     return opt_default(NULL, "pixel_format", arg);
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_sync(void *optctx, const char *opt, const char *arg)
 {
     if (!strcmp(arg, "audio"))
@@ -3505,19 +3872,40 @@ static int opt_sync(void *optctx, const char *opt, const char *arg)
     }
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_seek(void *optctx, const char *opt, const char *arg)
 {
     start_time = parse_time_or_die(opt, arg, 1);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_duration(void *optctx, const char *opt, const char *arg)
 {
     duration = parse_time_or_die(opt, arg, 1);
     return 0;
 }
-
+/**
+ * @brief 
+ * 显示模式化
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int opt_show_mode(void *optctx, const char *opt, const char *arg)
 {
     show_mode = !strcmp(arg, "video") ? SHOW_MODE_VIDEO :
@@ -3526,7 +3914,12 @@ static int opt_show_mode(void *optctx, const char *opt, const char *arg)
                 parse_number_or_die(opt, arg, OPT_INT, 0, SHOW_MODE_NB-1);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param filename 
+ */
 static void opt_input_file(void *optctx, const char *filename)
 {
     if (input_filename) {
@@ -3563,7 +3956,11 @@ static int opt_codec(void *optctx, const char *opt, const char *arg)
 }
 
 static int dummy;
-
+/**
+ * @brief 
+ * ffplay指令
+ * 
+ */
 static const OptionDef options[] = {
     CMDUTILS_COMMON_OPTIONS
     { "x", HAS_ARG, { .func_arg = opt_width }, "force displayed width", "width" },
@@ -3619,14 +4016,22 @@ static const OptionDef options[] = {
     { "filter_threads", HAS_ARG | OPT_INT | OPT_EXPERT, { &filter_nbthreads }, "number of filter threads per graph" },
     { NULL, },
 };
-
+/**
+ * @brief 
+ * 显示用法
+ */
 static void show_usage(void)
 {
     av_log(NULL, AV_LOG_INFO, "Simple media player\n");
     av_log(NULL, AV_LOG_INFO, "usage: %s [options] input_file\n", program_name);
     av_log(NULL, AV_LOG_INFO, "\n");
 }
-
+/**
+ * @brief 
+ * 显示帮助
+ * @param opt 
+ * @param arg 
+ */
 void show_help_default(const char *opt, const char *arg)
 {
     av_log_set_callback(log_callback_help);
@@ -3663,13 +4068,20 @@ void show_help_default(const char *opt, const char *arg)
 }
 
 /* Called from the main */
+/**
+ * @brief ffplay的主程序
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char **argv)
 {
     int flags;
     VideoState *is;
-
+    //初始化动态库加载，对于linux没有作用
     init_dynload();
-
+    //设置日志
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
     parse_loglevel(argc, argv, options);
 

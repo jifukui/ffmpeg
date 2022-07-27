@@ -28,13 +28,27 @@
 #include "libavutil/common.h"
 
 #include "parser.h"
-
+/**
+ * @brief 
+ * 位图解析内容
+ * 
+ */
 typedef struct BMPParseContext {
     ParseContext pc;
     uint32_t fsize;
     uint32_t remaining_size;
 } BMPParseContext;
-
+/**
+ * @brief 
+ * 位图解析
+ * @param s 
+ * @param avctx 
+ * @param poutbuf 
+ * @param poutbuf_size 
+ * @param buf 
+ * @param buf_size 
+ * @return int 
+ */
 static int bmp_parse(AVCodecParserContext *s, AVCodecContext *avctx,
                      const uint8_t **poutbuf, int *poutbuf_size,
                      const uint8_t *buf, int buf_size)

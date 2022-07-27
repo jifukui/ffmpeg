@@ -68,14 +68,20 @@ static int get_hwcap(uint32_t *hwcap)
     fclose(f);
     return err;
 }
-
+/**
+ * @brief Get the cpuinfo object
+ * 获取CPU的信息
+ * @param hwcap 
+ * @return int 
+ */
 static int get_cpuinfo(uint32_t *hwcap)
 {
     FILE *f = fopen("/proc/cpuinfo", "r");
     char buf[200];
 
-    if (!f)
+    if (!f){
         return -1;
+    }
 
     *hwcap = 0;
     while (fgets(buf, sizeof(buf), f)) {

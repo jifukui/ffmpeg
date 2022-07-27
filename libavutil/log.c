@@ -376,17 +376,29 @@ void av_vlog(void* avcl, int level, const char *fmt, va_list vl)
     if (log_callback)
         log_callback(avcl, level, fmt, vl);
 }
-
+/**
+ * @brief 
+ * 获取日志等级
+ * @return int 
+ */
 int av_log_get_level(void)
 {
     return av_log_level;
 }
-
+/**
+ * @brief 
+ * 设置日志等级
+ * @param level 
+ */
 void av_log_set_level(int level)
 {
     av_log_level = level;
 }
-
+/**
+ * @brief 设置
+ * 
+ * @param arg 
+ */
 void av_log_set_flags(int arg)
 {
     flags = arg;
@@ -396,7 +408,11 @@ int av_log_get_flags(void)
 {
     return flags;
 }
-
+/**
+ * @brief 
+ * 
+ * @param callback 
+ */
 void av_log_set_callback(void (*callback)(void*, int, const char*, va_list))
 {
     av_log_callback = callback;

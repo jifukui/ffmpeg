@@ -71,18 +71,20 @@ static void sws_printVec2(SwsVector *a, AVClass *log_ctx, int log_level);
 #endif
 
 static void handle_formats(SwsContext *c);
-
+/**
+ * 显示缩放的版本
+*/
 unsigned swscale_version(void)
 {
     av_assert0(LIBSWSCALE_VERSION_MICRO >= 100);
     return LIBSWSCALE_VERSION_INT;
 }
-
+/**显示缩放的配置*/
 const char *swscale_configuration(void)
 {
     return FFMPEG_CONFIGURATION;
 }
-
+/***/
 const char *swscale_license(void)
 {
 #define LICENSE_PREFIX "libswscale license: "
@@ -94,7 +96,7 @@ typedef struct FormatEntry {
     uint8_t is_supported_out        :1;
     uint8_t is_supported_endianness :1;
 } FormatEntry;
-
+/**支持的像素格式*/
 static const FormatEntry format_entries[AV_PIX_FMT_NB] = {
     [AV_PIX_FMT_YUV420P]     = { 1, 1 },
     [AV_PIX_FMT_YUYV422]     = { 1, 1 },
@@ -267,36 +269,48 @@ static const FormatEntry format_entries[AV_PIX_FMT_NB] = {
     [AV_PIX_FMT_NV24]        = { 1, 1 },
     [AV_PIX_FMT_NV42]        = { 1, 1 },
 };
-
+/**
+ * 输入是否支持
+*/
 int sws_isSupportedInput(enum AVPixelFormat pix_fmt)
 {
     return (unsigned)pix_fmt < AV_PIX_FMT_NB ?
            format_entries[pix_fmt].is_supported_in : 0;
 }
-
+/**
+ * 输出是否支持
+*/
 int sws_isSupportedOutput(enum AVPixelFormat pix_fmt)
 {
     return (unsigned)pix_fmt < AV_PIX_FMT_NB ?
            format_entries[pix_fmt].is_supported_out : 0;
 }
-
+/**
+ * 是否支持端转换
+*/
 int sws_isSupportedEndiannessConversion(enum AVPixelFormat pix_fmt)
 {
     return (unsigned)pix_fmt < AV_PIX_FMT_NB ?
            format_entries[pix_fmt].is_supported_endianness : 0;
 }
-
+/**
+ * 获取样条系数
+*/
 static double getSplineCoeff(double a, double b, double c, double d,
                              double dist)
 {
     if (dist <= 1.0)
+    {
         return ((d * dist + c) * dist + b) * dist + a;
+    }
     else
+    {
         return getSplineCoeff(0.0,
                                b + 2.0 * c + 3.0 * d,
                                c + 3.0 * d,
                               -b - 3.0 * c - 6.0 * d,
                               dist - 1.0);
+    }
 }
 
 static av_cold int get_local_pos(SwsContext *s, int chr_subsample, int pos, int dir)
@@ -313,7 +327,7 @@ typedef struct {
     const char *description;    ///< human-readable description
     int size_factor;            ///< size factor used when initing the filters
 } ScaleAlgorithm;
-
+/**缩放算法*/
 static const ScaleAlgorithm scale_algorithms[] = {
     { SWS_AREA,          "area averaging",                  1 /* downscale only, for upscale it is bilinear */ },
     { SWS_BICUBIC,       "bicubic",                         4 },
@@ -327,7 +341,9 @@ static const ScaleAlgorithm scale_algorithms[] = {
     { SWS_SPLINE,        "bicubic spline",                 20 /* infinite :)*/ },
     { SWS_X,             "experimental",                    8 },
 };
-
+/**
+ * 滤镜初始化
+*/
 static av_cold int initFilter(int16_t **outFilter, int32_t **filterPos,
                               int *outFilterSize, int xInc, int srcW,
                               int dstW, int filterAlign, int one,
@@ -724,7 +740,9 @@ fail:
     av_free(filter2);
     return ret;
 }
-
+/**
+ * 
+*/
 static void fill_rgb2yuv_table(SwsContext *c, const int table[4], int dstRange)
 {
     int64_t W, V, Z, Cy, Cu, Cv;
@@ -818,7 +836,9 @@ static void fill_rgb2yuv_table(SwsContext *c, const int table[4], int dstRange)
     for(i=0; i<FF_ARRAY_ELEMS(map); i++)
         AV_WL16(p + 16*4 + 2*i, map[i] >= 0 ? c->input_rgb2yuv_table[map[i]] : 0);
 }
-
+/**
+ * 
+*/
 static void fill_xyztables(struct SwsContext *c)
 {
     int i;
@@ -854,7 +874,9 @@ static void fill_xyztables(struct SwsContext *c)
         rgbgammainv_tab[i] = lrint(pow(i / 4095.0, rgbgammainv) * 4095.0);
     }
 }
-
+/**
+ * 设置颜色空间详细信息
+*/
 int sws_setColorspaceDetails(struct SwsContext *c, const int inv_table[4],
                              int srcRange, const int table[4], int dstRange,
                              int brightness, int contrast, int saturation)
@@ -1161,7 +1183,12 @@ static enum AVPixelFormat alphaless_fmt(enum AVPixelFormat fmt)
     default: return AV_PIX_FMT_NONE;
     }
 }
-
+/**
+ * 内容初始化
+ * c:
+ * srcFilter:源滤镜
+ * dstFilter：目的滤镜
+*/
 av_cold int sws_init_context(SwsContext *c, SwsFilter *srcFilter,
                              SwsFilter *dstFilter)
 {
@@ -1187,7 +1214,9 @@ av_cold int sws_init_context(SwsContext *c, SwsFilter *srcFilter,
     flags     = c->flags;
     emms_c();
     if (!rgb15to16)
+    {
         ff_sws_rgb2rgb_init();
+    }
 
     unscaled = (srcW == dstW && srcH == dstH);
 
@@ -2100,7 +2129,9 @@ void sws_scaleVec(SwsVector *a, double scalar)
     int i;
 
     for (i = 0; i < a->length; i++)
+    {
         a->coeff[i] *= scalar;
+    }
 }
 
 void sws_normalizeVec(SwsVector *a, double height)
@@ -2367,7 +2398,9 @@ void sws_freeContext(SwsContext *c)
 
     av_free(c);
 }
-
+/**
+ * 获取缓存的内容
+*/
 struct SwsContext *sws_getCachedContext(struct SwsContext *context, int srcW,
                                         int srcH, enum AVPixelFormat srcFormat,
                                         int dstW, int dstH,

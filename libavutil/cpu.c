@@ -48,7 +48,11 @@
 #endif
 
 static atomic_int cpu_flags = ATOMIC_VAR_INIT(-1);
-
+/**
+ * @brief Get the cpu flags object
+ * 判断CPU的类型是ARM PPC X86等
+ * @return int 
+ */
 static int get_cpu_flags(void)
 {
     if (ARCH_AARCH64)
@@ -61,7 +65,12 @@ static int get_cpu_flags(void)
         return ff_get_cpu_flags_x86();
     return 0;
 }
-
+/**
+ * @brief 
+ * 获取CPU对于视频相关的参数
+ * 
+ * @param arg 
+ */
 void av_force_cpu_flags(int arg){
     if (ARCH_X86 &&
            (arg & ( AV_CPU_FLAG_3DNOW    |

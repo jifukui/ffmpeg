@@ -351,14 +351,18 @@ static void hvcc_parse_vui(GetBitContext *gb,
         get_ue_golomb_long(gb); // log2_max_mv_length_vertical
     }
 }
-
+/**
+ * 获取子层的数据
+*/
 static void skip_sub_layer_ordering_info(GetBitContext *gb)
 {
     get_ue_golomb_long(gb); // max_dec_pic_buffering_minus1
     get_ue_golomb_long(gb); // max_num_reorder_pics
     get_ue_golomb_long(gb); // max_latency_increase_plus1
 }
-
+/**
+ * 处理VPS数据
+*/
 static int hvcc_parse_vps(GetBitContext *gb,
                           HEVCDecoderConfigurationRecord *hvcc)
 {
@@ -369,6 +373,7 @@ static int hvcc_parse_vps(GetBitContext *gb,
      * vps_reserved_three_2bits   u(2)
      * vps_max_layers_minus1      u(6)
      */
+    //跳过12bit数据
     skip_bits(gb, 12);
 
     vps_max_sub_layers_minus1 = get_bits(gb, 3);
@@ -414,7 +419,9 @@ static void skip_scaling_list_data(GetBitContext *gb)
                     get_se_golomb_long(gb); // scaling_list_delta_coef
             }
 }
-
+/**
+ * 处理RPS
+*/
 static int parse_rps(GetBitContext *gb, unsigned int rps_idx,
                      unsigned int num_rps,
                      unsigned int num_delta_pocs[HEVC_MAX_SHORT_TERM_REF_PIC_SETS])
@@ -481,7 +488,9 @@ static int parse_rps(GetBitContext *gb, unsigned int rps_idx,
 
     return 0;
 }
-
+/**
+ * 处理SPS部分数据
+*/
 static int hvcc_parse_sps(GetBitContext *gb,
                           HEVCDecoderConfigurationRecord *hvcc)
 {
@@ -642,7 +651,9 @@ static int hvcc_parse_pps(GetBitContext *gb,
     /* nothing useful for hvcC past this point */
     return 0;
 }
-
+/**
+ * 处理NALU的头部信息
+*/
 static void nal_unit_parse_header(GetBitContext *gb, uint8_t *nal_type)
 {
     skip_bits1(gb); // forbidden_zero_bit

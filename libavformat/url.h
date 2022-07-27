@@ -34,7 +34,10 @@
 #define URL_PROTOCOL_FLAG_NETWORK       2 /*< The protocol uses network */
 
 extern const AVClass ffurl_context_class;
-
+/**
+ * @brief URL对象
+ * 
+ */
 typedef struct URLContext {
     const AVClass *av_class;    /**< information for av_log(). Set by url_open(). */
     const struct URLProtocol *prot;
@@ -50,7 +53,10 @@ typedef struct URLContext {
     const char *protocol_blacklist;
     int min_packet_size;        /**< if non zero, the stream is packetized with this min packet size */
 } URLContext;
-
+/**
+ * @brief URL协议
+ * 
+ */
 typedef struct URLProtocol {
     const char *name;
     int     (*url_open)( URLContext *h, const char *url, int flags);

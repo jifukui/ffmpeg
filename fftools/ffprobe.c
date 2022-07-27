@@ -3547,7 +3547,13 @@ static inline int check_section_show_entries(int section_id)
         if (check_section_show_entries(SECTION_ID_##id))                \
             do_show_##varname = 1;                                      \
     } while (0)
-
+/**
+ * @brief ffprob的主程序
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
 int main(int argc, char **argv)
 {
     const Writer *w;

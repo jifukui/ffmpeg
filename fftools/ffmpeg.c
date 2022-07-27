@@ -177,9 +177,7 @@ static void free_input_threads(void);
    Convert subtitles to video with alpha to insert them in filter graphs.
    This is a temporary solution until libavfilter gets real subtitles support.
  */
-/**
- * 
-*/
+
 static int sub2video_get_blank_frame(InputStream *ist)
 {
     int ret;

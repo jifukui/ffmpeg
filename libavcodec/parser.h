@@ -24,12 +24,15 @@
 #define AVCODEC_PARSER_H
 
 #include "avcodec.h"
-
+/**
+ * @brief 
+ * 解析的内容
+ */
 typedef struct ParseContext{
-    uint8_t *buffer;
-    int index;
-    int last_index;
-    unsigned int buffer_size;
+    uint8_t *buffer;//字节流指针
+    int index;//当前索引
+    int last_index;//上一次索引
+    unsigned int buffer_size;//字符串的代销
     uint32_t state;             ///< contains the last few bytes in MSB order
     int frame_start_found;
     int overread;               ///< the number of bytes which where irreversibly read from the next frame

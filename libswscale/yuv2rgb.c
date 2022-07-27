@@ -63,7 +63,9 @@ const int32_t ff_yuv2rgb_coeffs[11][4] = {
 const int *sws_getCoefficients(int colorspace)
 {
     if (colorspace > 10 || colorspace < 0 || colorspace == 8)
+    {
         colorspace = SWS_CS_DEFAULT;
+    }
     return ff_yuv2rgb_coeffs[colorspace];
 }
 
@@ -746,7 +748,12 @@ static void fill_table(uint8_t* table[256 + 2*YUVRGB_TABLE_HEADROOM], const int 
         table[i] = y_table + elemsize * (cb >> 16);
     }
 }
-
+/**
+ * 填充gv表
+ * table
+ * elemsize
+ * inc
+*/
 static void fill_gv_table(int table[256 + 2*YUVRGB_TABLE_HEADROOM], const int elemsize, const int64_t inc)
 {
     int i;
@@ -757,19 +764,34 @@ static void fill_gv_table(int table[256 + 2*YUVRGB_TABLE_HEADROOM], const int el
         table[i] = elemsize * (off + (cb >> 16));
     }
 }
-
+/**
+ * 将数据转换为int16类型
+*/
 static uint16_t roundToInt16(int64_t f)
 {
     int r = (f + (1 << 15)) >> 16;
-
     if (r < -0x7FFF)
+    {
         return 0x8000;
+    }
     else if (r > 0x7FFF)
+    {
         return 0x7FFF;
+    }
     else
+    {
         return r;
+    }
 }
-
+/**
+ * yuv转换为RGB
+ * c
+ * inv_table
+ * fullRange
+ * brightness
+ * contrast
+ * saturation
+*/
 av_cold int ff_yuv2rgb_c_init_tables(SwsContext *c, const int inv_table[4],
                                      int fullRange, int brightness,
                                      int contrast, int saturation)

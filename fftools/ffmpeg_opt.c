@@ -121,7 +121,11 @@ static int input_stream_potentially_available = 0;
 static int ignore_unknown_streams = 0;
 static int copy_unknown_streams = 0;
 static int find_stream_info = 1;
-
+/**
+ * @brief 
+ * 注销参数
+ * @param o 
+ */
 static void uninit_options(OptionsContext *o)
 {
     const OptionDef *po = options;
@@ -153,7 +157,11 @@ static void uninit_options(OptionsContext *o)
     av_freep(&o->streamid_map);
     av_freep(&o->attachments);
 }
-
+/**
+ * @brief 
+ * 初始化参数
+ * @param o 
+ */
 static void init_options(OptionsContext *o)
 {
     memset(o, 0, sizeof(*o));
@@ -3232,7 +3240,10 @@ void show_help_default(const char *opt, const char *arg)
         show_help_children(av_bsf_get_class(), AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_AUDIO_PARAM | AV_OPT_FLAG_BSF_PARAM);
     }
 }
-
+/**
+ * @brief 显示使用手册
+ * 
+ */
 void show_usage(void)
 {
     av_log(NULL, AV_LOG_INFO, "Hyper fast Audio and Video encoder\n");
@@ -3282,7 +3293,13 @@ static int open_files(OptionGroupList *l, const char *inout,
 
     return 0;
 }
-
+/**
+ * @brief FFmpeg参数处理
+ * 
+ * @param argc 参数数量
+ * @param argv 参数内容
+ * @return int 
+ */
 int ffmpeg_parse_options(int argc, char **argv)
 {
     OptionParseContext octx;
@@ -3292,6 +3309,7 @@ int ffmpeg_parse_options(int argc, char **argv)
     memset(&octx, 0, sizeof(octx));
 
     /* split the commandline into an internal representation */
+    //
     ret = split_commandline(&octx, argc, argv, options, groups,
                             FF_ARRAY_ELEMS(groups));
     if (ret < 0) {
@@ -3359,6 +3377,10 @@ static int opt_progress(void *optctx, const char *opt, const char *arg)
 }
 
 #define OFFSET(x) offsetof(OptionsContext, x)
+/**
+ * @brief 
+ * 参数定义
+ */
 const OptionDef options[] = {
     /* main options */
     CMDUTILS_COMMON_OPTIONS

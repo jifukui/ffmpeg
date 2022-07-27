@@ -133,18 +133,28 @@ void (*yuyvtoyuv422)(uint8_t *ydst, uint8_t *udst, uint8_t *vdst,
  * MMXEXT, 3DNOW optimization by Nick Kurshev
  * 32-bit C version, and and&add trick by Michael Niedermayer
  */
-
+/***/
 av_cold void ff_sws_rgb2rgb_init(void)
 {
     rgb2rgb_init_c();
     if (ARCH_X86)
+    {
         rgb2rgb_init_x86();
+    }
 }
-
+/**
+ * rgb32转换为rgb24
+ * 即RGBA转换为RGB
+ * src:数据源
+ * dst:数据目的
+ * src_size:数据量
+*/
 void rgb32to24(const uint8_t *src, uint8_t *dst, int src_size)
 {
-    int i, num_pixels = src_size >> 2;
-
+    int i; 
+    //像素个数
+    int num_pixels = src_size >> 2;
+    //遍历所有像素剔除掉A数据
     for (i = 0; i < num_pixels; i++) {
 #if HAVE_BIGENDIAN
         /* RGB32 (= A,B,G,R) -> BGR24 (= B,G,R) */
@@ -158,11 +168,16 @@ void rgb32to24(const uint8_t *src, uint8_t *dst, int src_size)
 #endif
     }
 }
-
+/**
+ * RGB转换为RGBA
+ * src:数据源
+ * dst:数据目的
+ * src_size:数据的个数
+*/
 void rgb24to32(const uint8_t *src, uint8_t *dst, int src_size)
 {
     int i;
-
+    //设置像素的A的值为255
     for (i = 0; 3 * i < src_size; i++) {
 #if HAVE_BIGENDIAN
         /* RGB24 (= R, G, B) -> BGR32 (= A, R, G, B) */
@@ -178,13 +193,19 @@ void rgb24to32(const uint8_t *src, uint8_t *dst, int src_size)
 #endif
     }
 }
-
+/**
+ * RGB16转换为RGB24
+ * src:源数据
+ * dst:目的数据
+ * src_size:数据大小
+ * 源数据应该是rgb565的格式
+*/
 void rgb16tobgr32(const uint8_t *src, uint8_t *dst, int src_size)
 {
     uint8_t *d          = dst;
     const uint16_t *s   = (const uint16_t *)src;
     const uint16_t *end = s + src_size / 2;
-
+    
     while (s < end) {
         register uint16_t bgr = *s++;
 #if HAVE_BIGENDIAN
@@ -200,7 +221,9 @@ void rgb16tobgr32(const uint8_t *src, uint8_t *dst, int src_size)
 #endif
     }
 }
-
+/**
+ * RGB12转换为RGB15
+*/
 void rgb12to15(const uint8_t *src, uint8_t *dst, int src_size)
 {
     uint16_t rgb, r, g, b;
@@ -219,7 +242,9 @@ void rgb12to15(const uint8_t *src, uint8_t *dst, int src_size)
         *d++ = r | g | b;
     }
 }
-
+/**
+ * RGB16转换为RGB24
+*/
 void rgb16to24(const uint8_t *src, uint8_t *dst, int src_size)
 {
     uint8_t *d          = dst;
@@ -233,7 +258,9 @@ void rgb16to24(const uint8_t *src, uint8_t *dst, int src_size)
         *d++ = ((bgr&0x001F)<<3) | ((bgr&0x001F)>> 2);
     }
 }
-
+/**
+ * rgb16转换为BGR16
+*/
 void rgb16tobgr16(const uint8_t *src, uint8_t *dst, int src_size)
 {
     int i, num_pixels = src_size >> 1;

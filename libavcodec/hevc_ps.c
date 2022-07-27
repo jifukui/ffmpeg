@@ -420,7 +420,9 @@ static int decode_hrd(GetBitContext *gb, int common_inf_present,
     }
     return 0;
 }
-
+/**
+ * 处理 VPS
+*/
 int ff_hevc_decode_nal_vps(GetBitContext *gb, AVCodecContext *avctx,
                            HEVCParamSets *ps)
 {
@@ -431,7 +433,9 @@ int ff_hevc_decode_nal_vps(GetBitContext *gb, AVCodecContext *avctx,
     AVBufferRef *vps_buf = av_buffer_allocz(sizeof(*vps));
 
     if (!vps_buf)
+    {
         return AVERROR(ENOMEM);
+    }
     vps = (HEVCVPS*)vps_buf->data;
 
     av_log(avctx, AV_LOG_DEBUG, "Decoding VPS\n");
@@ -445,6 +449,7 @@ int ff_hevc_decode_nal_vps(GetBitContext *gb, AVCodecContext *avctx,
     } else {
         vps->data_size = nal_size;
     }
+    //将数据拷贝到vps中
     memcpy(vps->data, gb->buffer, vps->data_size);
 
     vps_id = get_bits(gb, 4);
@@ -474,7 +479,9 @@ int ff_hevc_decode_nal_vps(GetBitContext *gb, AVCodecContext *avctx,
     }
 
     if (parse_ptl(gb, avctx, &vps->ptl, vps->vps_max_sub_layers) < 0)
+    {
         goto err;
+    }
 
     vps->vps_sub_layer_ordering_info_present_flag = get_bits1(gb);
 
@@ -506,8 +513,12 @@ int ff_hevc_decode_nal_vps(GetBitContext *gb, AVCodecContext *avctx,
     }
 
     for (i = 1; i < vps->vps_num_layer_sets; i++)
+    {
         for (j = 0; j <= vps->vps_max_layer_id; j++)
+        {
             skip_bits(gb, 1);  // layer_id_included_flag[i][j]
+        }
+    }
 
     vps->vps_timing_info_present_flag = get_bits1(gb);
     if (vps->vps_timing_info_present_flag) {

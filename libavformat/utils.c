@@ -4989,7 +4989,11 @@ int avformat_query_codec(const AVOutputFormat *ofmt, enum AVCodecID codec_id,
     }
     return AVERROR_PATCHWELCOME;
 }
-
+/**
+ * @brief AV格式网络初始化
+ * 
+ * @return int 
+ */
 int avformat_network_init(void)
 {
 #if CONFIG_NETWORK

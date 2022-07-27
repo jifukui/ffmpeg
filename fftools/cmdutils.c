@@ -81,12 +81,18 @@ enum show_muxdemuxers {
     SHOW_DEMUXERS,
     SHOW_MUXERS,
 };
-
+/**
+ * @brief 初始化参数
+ * 
+ */
 void init_opts(void)
 {
     av_dict_set(&sws_dict, "flags", "bicubic", 0);
 }
-
+/**
+ * @brief 
+ * 注销参数
+ */
 void uninit_opts(void)
 {
     av_dict_free(&swr_opts);
@@ -95,12 +101,26 @@ void uninit_opts(void)
     av_dict_free(&codec_opts);
     av_dict_free(&resample_opts);
 }
-
+/**
+ * @brief 打印帮助信息
+ * 
+ * @param ptr 
+ * @param level 
+ * @param fmt 
+ * @param vl 
+ */
 void log_callback_help(void *ptr, int level, const char *fmt, va_list vl)
 {
     vfprintf(stdout, fmt, vl);
 }
-
+/**
+ * @brief 
+ * 
+ * @param ptr 
+ * @param level 
+ * @param fmt 
+ * @param vl 
+ */
 static void log_callback_report(void *ptr, int level, const char *fmt, va_list vl)
 {
     va_list vl2;
@@ -116,7 +136,10 @@ static void log_callback_report(void *ptr, int level, const char *fmt, va_list v
         fflush(report_file);
     }
 }
-
+/**
+ * @brief 初始化动态加载
+ * 设置动态库的目录
+ */
 void init_dynload(void)
 {
 #ifdef _WIN32
@@ -127,16 +150,25 @@ void init_dynload(void)
 }
 
 static void (*program_exit)(int ret);
-
+/**
+ * @brief 注册退出函数
+ * 
+ * @param cb 
+ */
 void register_exit(void (*cb)(int ret))
 {
     program_exit = cb;
 }
-
+/**
+ * @brief 退出程序
+ * 
+ * @param ret 
+ */
 void exit_program(int ret)
 {
-    if (program_exit)
+    if (program_exit){
         program_exit(ret);
+    }
 
     exit(ret);
 }
@@ -173,7 +205,15 @@ int64_t parse_time_or_die(const char *context, const char *timestr,
     }
     return us;
 }
-
+/**
+ * @brief 显示帮助参数
+ * 
+ * @param options 
+ * @param msg 
+ * @param req_flags 
+ * @param rej_flags 
+ * @param alt_flags 
+ */
 void show_help_options(const OptionDef *options, const char *msg, int req_flags,
                        int rej_flags, int alt_flags)
 {
@@ -291,7 +331,15 @@ static inline void prepare_app_arguments(int *argc_ptr, char ***argv_ptr)
     /* nothing to do */
 }
 #endif /* HAVE_COMMANDLINETOARGVW */
-
+/**
+ * @brief 写指令
+ * 
+ * @param optctx 
+ * @param po 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 static int write_option(void *optctx, const OptionDef *po, const char *opt,
                         const char *arg)
 {
@@ -346,7 +394,15 @@ static int write_option(void *optctx, const OptionDef *po, const char *opt,
 
     return 0;
 }
-
+/**
+ * @brief 解析指令
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @param options 
+ * @return int 
+ */
 int parse_option(void *optctx, const char *opt, const char *arg,
                  const OptionDef *options)
 {
@@ -379,7 +435,15 @@ int parse_option(void *optctx, const char *opt, const char *arg,
 
     return !!(po->flags & HAS_ARG);
 }
-
+/**
+ * @brief 解析指令
+ * 
+ * @param optctx 
+ * @param argc 
+ * @param argv 
+ * @param options 
+ * @param parse_arg_function 
+ */
 void parse_options(void *optctx, int argc, char **argv, const OptionDef *options,
                    void (*parse_arg_function)(void *, const char*))
 {
@@ -493,7 +557,11 @@ static void dump_argument(const char *a)
     }
     fputc('"', report_file);
 }
-
+/**
+ * @brief 检测指令
+ * 
+ * @param po 
+ */
 static void check_options(const OptionDef *po)
 {
     while (po->name) {
@@ -502,7 +570,13 @@ static void check_options(const OptionDef *po)
         po++;
     }
 }
-
+/**
+ * @brief 处理日志等级
+ * 
+ * @param argc 
+ * @param argv 
+ * @param options 
+ */
 void parse_loglevel(int argc, char **argv, const OptionDef *options)
 {
     int idx = locate_option(argc, argv, options, "loglevel");
@@ -867,7 +941,14 @@ int opt_cpuflags(void *optctx, const char *opt, const char *arg)
     av_force_cpu_flags(flags);
     return 0;
 }
-
+/**
+ * @brief 指令日志等级
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int opt_loglevel(void *optctx, const char *opt, const char *arg)
 {
     const struct { const char *name; int level; } log_levels[] = {
@@ -946,7 +1027,13 @@ end:
     av_log_set_level(level);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param bp 
+ * @param template 
+ * @param tm 
+ */
 static void expand_filename_template(AVBPrint *bp, const char *template,
                                      struct tm *tm)
 {
@@ -974,7 +1061,12 @@ static void expand_filename_template(AVBPrint *bp, const char *template,
         }
     }
 }
-
+/**
+ * @brief 初始化报告
+ * 
+ * @param env 
+ * @return int 
+ */
 static int init_report(const char *env)
 {
     char *filename_template = NULL;
@@ -1045,7 +1137,12 @@ static int init_report(const char *env)
     av_bprint_finalize(&filename, NULL);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param opt 
+ * @return int 
+ */
 int opt_report(const char *opt)
 {
     return init_report(NULL);
@@ -1077,7 +1174,12 @@ int opt_timelimit(void *optctx, const char *opt, const char *arg)
 #endif
     return 0;
 }
-
+/**
+ * @brief 打印错误
+ * 
+ * @param filename 
+ * @param err 
+ */
 void print_error(const char *filename, int err)
 {
     char errbuf[128];
@@ -1123,7 +1225,12 @@ static int warned_cfg = 0;
             }                                                           \
         }                                                               \
     }                                                                   \
-
+/**
+ * @brief 答应所有的库信息
+ * 
+ * @param flags 
+ * @param level 
+ */
 static void print_all_libs_info(int flags, int level)
 {
     PRINT_LIB_INFO(avutil,     AVUTIL,     flags, level);
@@ -1136,7 +1243,12 @@ static void print_all_libs_info(int flags, int level)
     PRINT_LIB_INFO(swresample, SWRESAMPLE, flags, level);
     PRINT_LIB_INFO(postproc,   POSTPROC,   flags, level);
 }
-
+/**
+ * @brief 打印程序信息
+ * 
+ * @param flags 
+ * @param level 
+ */
 static void print_program_info(int flags, int level)
 {
     const char *indent = flags & INDENT? "  " : "";
@@ -1150,7 +1262,12 @@ static void print_program_info(int flags, int level)
 
     av_log(NULL, level, "%sconfiguration: " FFMPEG_CONFIGURATION "\n", indent);
 }
-
+/**
+ * @brief 打印构建配置
+ * 
+ * @param flags 
+ * @param level 
+ */
 static void print_buildconf(int flags, int level)
 {
     const char *indent = flags & INDENT ? "  " : "";
@@ -1176,18 +1293,32 @@ static void print_buildconf(int flags, int level)
         splitconf = strtok(NULL, "~");
     }
 }
-
+/**
+ * @brief 打印横幅
+ * 
+ * @param argc 参数数量
+ * @param argv 参数
+ * @param options 指令
+ */
 void show_banner(int argc, char **argv, const OptionDef *options)
 {
     int idx = locate_option(argc, argv, options, "version");
-    if (hide_banner || idx)
+    if (hide_banner || idx){
         return;
+    }
 
     print_program_info (INDENT|SHOW_COPYRIGHT, AV_LOG_INFO);
     print_all_libs_info(INDENT|SHOW_CONFIG,  AV_LOG_INFO);
     print_all_libs_info(INDENT|SHOW_VERSION, AV_LOG_INFO);
 }
-
+/**
+ * @brief 打印版本
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_version(void *optctx, const char *opt, const char *arg)
 {
     av_log_set_callback(log_callback_help);
@@ -1196,7 +1327,14 @@ int show_version(void *optctx, const char *opt, const char *arg)
 
     return 0;
 }
-
+/**
+ * @brief 打印构建配置
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_buildconf(void *optctx, const char *opt, const char *arg)
 {
     av_log_set_callback(log_callback_help);
@@ -1204,7 +1342,14 @@ int show_buildconf(void *optctx, const char *opt, const char *arg)
 
     return 0;
 }
-
+/**
+ * @brief 打印license
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_license(void *optctx, const char *opt, const char *arg)
 {
 #if CONFIG_NONFREE
@@ -1381,7 +1526,11 @@ int show_devices(void *optctx, const char *opt, const char *arg)
         }                                                                    \
         printf("\n");                                                        \
     }                                                                        \
-
+/**
+ * @brief 打印编码器
+ * 
+ * @param c 
+ */
 static void print_codec(const AVCodec *c)
 {
     int encoder = av_codec_is_encoder(c);
@@ -1480,7 +1629,12 @@ static void print_codec(const AVCodec *c)
                            AV_OPT_FLAG_DECODING_PARAM);
     }
 }
-
+/**
+ * @brief 获取媒体类型
+ * 
+ * @param type 
+ * @return char 
+ */
 static char get_media_type_char(enum AVMediaType type)
 {
     switch (type) {
@@ -1492,7 +1646,14 @@ static char get_media_type_char(enum AVMediaType type)
         default:                    return '?';
     }
 }
-
+/**
+ * @brief 
+ * 
+ * @param id 
+ * @param prev 
+ * @param encoder 
+ * @return const AVCodec* 
+ */
 static const AVCodec *next_codec_for_id(enum AVCodecID id, const AVCodec *prev,
                                         int encoder)
 {
@@ -1503,7 +1664,13 @@ static const AVCodec *next_codec_for_id(enum AVCodecID id, const AVCodec *prev,
     }
     return NULL;
 }
-
+/**
+ * @brief 对比编码器描述
+ * 
+ * @param a 
+ * @param b 
+ * @return int 
+ */
 static int compare_codec_desc(const void *a, const void *b)
 {
     const AVCodecDescriptor * const *da = a;
@@ -1512,7 +1679,12 @@ static int compare_codec_desc(const void *a, const void *b)
     return (*da)->type != (*db)->type ? FFDIFFSIGN((*da)->type, (*db)->type) :
            strcmp((*da)->name, (*db)->name);
 }
-
+/**
+ * @brief Get the codecs sorted object
+ * 
+ * @param rcodecs 
+ * @return unsigned 
+ */
 static unsigned get_codecs_sorted(const AVCodecDescriptor ***rcodecs)
 {
     const AVCodecDescriptor *desc = NULL;
@@ -1533,7 +1705,12 @@ static unsigned get_codecs_sorted(const AVCodecDescriptor ***rcodecs)
     *rcodecs = codecs;
     return nb_codecs;
 }
-
+/**
+ * @brief 根据编码器的id打印
+ * 
+ * @param id 
+ * @param encoder 
+ */
 static void print_codecs_for_id(enum AVCodecID id, int encoder)
 {
     const AVCodec *codec = NULL;
@@ -1545,7 +1722,14 @@ static void print_codecs_for_id(enum AVCodecID id, int encoder)
 
     printf(")");
 }
-
+/**
+ * @brief 显示编码器
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_codecs(void *optctx, const char *opt, const char *arg)
 {
     const AVCodecDescriptor **codecs;
@@ -1600,7 +1784,7 @@ int show_codecs(void *optctx, const char *opt, const char *arg)
     av_free(codecs);
     return 0;
 }
-
+/**打印编码器*/
 static void print_codecs(int encoder)
 {
     const AVCodecDescriptor **codecs;
@@ -1638,19 +1822,40 @@ static void print_codecs(int encoder)
     }
     av_free(codecs);
 }
-
+/**
+ * @brief 打印解码器
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_decoders(void *optctx, const char *opt, const char *arg)
 {
     print_codecs(0);
     return 0;
 }
-
+/**
+ * @brief 打印编码器
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_encoders(void *optctx, const char *opt, const char *arg)
 {
     print_codecs(1);
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_bsfs(void *optctx, const char *opt, const char *arg)
 {
     const AVBitStreamFilter *bsf = NULL;
@@ -1662,7 +1867,14 @@ int show_bsfs(void *optctx, const char *opt, const char *arg)
     printf("\n");
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_protocols(void *optctx, const char *opt, const char *arg)
 {
     void *opaque = NULL;
@@ -1677,7 +1889,14 @@ int show_protocols(void *optctx, const char *opt, const char *arg)
         printf("  %s\n", name);
     return 0;
 }
-
+/**
+ * @brief 打印滤镜
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_filters(void *optctx, const char *opt, const char *arg)
 {
 #if CONFIG_AVFILTER
@@ -1724,7 +1943,14 @@ int show_filters(void *optctx, const char *opt, const char *arg)
 #endif
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_colors(void *optctx, const char *opt, const char *arg)
 {
     const char *name;
@@ -1738,7 +1964,14 @@ int show_colors(void *optctx, const char *opt, const char *arg)
 
     return 0;
 }
-
+/**
+ * @brief 打印像素格式
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_pix_fmts(void *optctx, const char *opt, const char *arg)
 {
     const AVPixFmtDescriptor *pix_desc = NULL;
@@ -1771,7 +2004,14 @@ int show_pix_fmts(void *optctx, const char *opt, const char *arg)
     }
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_layouts(void *optctx, const char *opt, const char *arg)
 {
     int i = 0;
@@ -1800,7 +2040,14 @@ int show_layouts(void *optctx, const char *opt, const char *arg)
     }
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_sample_fmts(void *optctx, const char *opt, const char *arg)
 {
     int i;
@@ -1809,7 +2056,12 @@ int show_sample_fmts(void *optctx, const char *opt, const char *arg)
         printf("%s\n", av_get_sample_fmt_string(fmt_str, sizeof(fmt_str), i));
     return 0;
 }
-
+/**
+ * @brief 
+ * 
+ * @param name 
+ * @param encoder 
+ */
 static void show_help_codec(const char *name, int encoder)
 {
     const AVCodecDescriptor *desc;
@@ -1844,7 +2096,11 @@ static void show_help_codec(const char *name, int encoder)
                name);
     }
 }
-
+/**
+ * @brief 解复用
+ * 
+ * @param name 
+ */
 static void show_help_demuxer(const char *name)
 {
     const AVInputFormat *fmt = av_find_input_format(name);
@@ -1862,7 +2118,11 @@ static void show_help_demuxer(const char *name)
     if (fmt->priv_class)
         show_help_children(fmt->priv_class, AV_OPT_FLAG_DECODING_PARAM);
 }
-
+/**
+ * @brief 复用
+ * 
+ * @param name 
+ */
 static void show_help_muxer(const char *name)
 {
     const AVCodecDescriptor *desc;
@@ -1951,7 +2211,11 @@ static void show_help_filter(const char *name)
 #endif
 }
 #endif
-
+/**
+ * @brief 
+ * 
+ * @param name 
+ */
 static void show_help_bsf(const char *name)
 {
     const AVBitStreamFilter *bsf = av_bsf_get_by_name(name);
@@ -1970,7 +2234,14 @@ static void show_help_bsf(const char *name)
     if (bsf->priv_class)
         show_help_children(bsf->priv_class, AV_OPT_FLAG_BSF_PARAM);
 }
-
+/**
+ * @brief 打印帮助
+ * 
+ * @param optctx 
+ * @param opt 
+ * @param arg 
+ * @return int 
+ */
 int show_help(void *optctx, const char *opt, const char *arg)
 {
     char *topic, *par;
@@ -2006,7 +2277,11 @@ int show_help(void *optctx, const char *opt, const char *arg)
     av_freep(&topic);
     return 0;
 }
-
+/**
+ * @brief 获取用户输入的是否状态
+ * 
+ * @return int 
+ */
 int read_yesno(void)
 {
     int c = getchar();
@@ -2017,7 +2292,16 @@ int read_yesno(void)
 
     return yesno;
 }
-
+/**
+ * @brief 获取预设文件
+ * 
+ * @param filename 
+ * @param filename_size 
+ * @param preset_name 
+ * @param is_path 
+ * @param codec_name 
+ * @return FILE* 
+ */
 FILE *get_preset_file(char *filename, size_t filename_size,
                       const char *preset_name, int is_path,
                       const char *codec_name)
@@ -2067,7 +2351,14 @@ FILE *get_preset_file(char *filename, size_t filename_size,
 
     return f;
 }
-
+/**
+ * @brief 
+ * 
+ * @param s 
+ * @param st 
+ * @param spec 
+ * @return int 
+ */
 int check_stream_specifier(AVFormatContext *s, AVStream *st, const char *spec)
 {
     int ret = avformat_match_stream_specifier(s, st, spec);
@@ -2075,7 +2366,16 @@ int check_stream_specifier(AVFormatContext *s, AVStream *st, const char *spec)
         av_log(s, AV_LOG_ERROR, "Invalid stream specifier: %s.\n", spec);
     return ret;
 }
-
+/**
+ * @brief 
+ * 
+ * @param opts 
+ * @param codec_id 
+ * @param s 
+ * @param st 
+ * @param codec 
+ * @return AVDictionary* 
+ */
 AVDictionary *filter_codec_opts(AVDictionary *opts, enum AVCodecID codec_id,
                                 AVFormatContext *s, AVStream *st, AVCodec *codec)
 {
@@ -2132,7 +2432,13 @@ AVDictionary *filter_codec_opts(AVDictionary *opts, enum AVCodecID codec_id,
     }
     return ret;
 }
-
+/**
+ * @brief Set the up find stream info opts object
+ * 
+ * @param s 
+ * @param codec_opts 
+ * @return AVDictionary** 
+ */
 AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
                                            AVDictionary *codec_opts)
 {
@@ -2152,7 +2458,15 @@ AVDictionary **setup_find_stream_info_opts(AVFormatContext *s,
                                     s, s->streams[i], NULL);
     return opts;
 }
-
+/**
+ * @brief 
+ * 
+ * @param array 
+ * @param elem_size 
+ * @param size 
+ * @param new_size 
+ * @return void* 
+ */
 void *grow_array(void *array, int elem_size, int *size, int new_size)
 {
     if (new_size >= INT_MAX / elem_size) {
@@ -2171,7 +2485,12 @@ void *grow_array(void *array, int elem_size, int *size, int new_size)
     }
     return array;
 }
-
+/**
+ * @brief Get the rotation object
+ * 
+ * @param st 
+ * @return double 
+ */
 double get_rotation(AVStream *st)
 {
     uint8_t* displaymatrix = av_stream_get_side_data(st,

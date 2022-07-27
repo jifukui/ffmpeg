@@ -64,6 +64,9 @@ struct AVOptionRanges;
  * arbitrary struct of which the first field is a pointer to an
  * AVClass struct (e.g. AVCodecContext, AVFormatContext etc.).
  */
+/**
+ * 
+*/
 typedef struct AVClass {
     /**
      * The name of the class; usually it is the same name as the
@@ -342,6 +345,7 @@ int av_log_format_line2(void *ptr, int level, const char *fmt, va_list vl,
  * Also to receive the last, "last repeated" line if any, the user app must
  * call av_log(NULL, AV_LOG_QUIET, "%s", ""); at the end
  */
+//跳过重复信息
 #define AV_LOG_SKIP_REPEATED 1
 
 /**
