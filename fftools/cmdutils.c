@@ -1309,8 +1309,8 @@ static void print_buildconf(int flags, int level)
     }
 }
 /**
- * @brief 打印横幅
- * 
+ * @brief 
+ * 打印横幅
  * @param argc 参数数量
  * @param argv 参数
  * @param options 指令
@@ -1321,9 +1321,11 @@ void show_banner(int argc, char **argv, const OptionDef *options)
     if (hide_banner || idx){
         return;
     }
-
+    //打印版权信息
     print_program_info (INDENT|SHOW_COPYRIGHT, AV_LOG_INFO);
+    //打印配置信息
     print_all_libs_info(INDENT|SHOW_CONFIG,  AV_LOG_INFO);
+    //打印版本信息
     print_all_libs_info(INDENT|SHOW_VERSION, AV_LOG_INFO);
 }
 /**

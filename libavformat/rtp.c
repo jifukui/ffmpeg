@@ -31,6 +31,11 @@
  * all the other payload types not present in the table are unassigned or
  * reserved
  */
+
+/**
+ * @brief 
+ * RTP载荷信息结构体
+ */
 static const struct {
     int pt;
     const char enc_name[6];
@@ -67,7 +72,13 @@ static const struct {
   {34, "H263",       AVMEDIA_TYPE_VIDEO,   AV_CODEC_ID_H263, 90000, -1},
   {-1, "",           AVMEDIA_TYPE_UNKNOWN, AV_CODEC_ID_NONE, -1, -1}
 };
-
+/**
+ * @brief 
+ * 获取编码器信息
+ * @param par 
+ * @param payload_type 
+ * @return int 
+ */
 int ff_rtp_get_codec_info(AVCodecParameters *par, int payload_type)
 {
     int i = 0;
@@ -86,7 +97,14 @@ int ff_rtp_get_codec_info(AVCodecParameters *par, int payload_type)
         }
     return -1;
 }
-
+/**
+ * @brief 
+ * 获取载荷类型
+ * @param fmt 
+ * @param par 
+ * @param idx 
+ * @return int 
+ */
 int ff_rtp_get_payload_type(AVFormatContext *fmt,
                             AVCodecParameters *par, int idx)
 {
@@ -128,7 +146,12 @@ int ff_rtp_get_payload_type(AVFormatContext *fmt,
     /* dynamic payload type */
     return RTP_PT_PRIVATE + idx;
 }
-
+/**
+ * @brief 
+ * 根据传入的载荷参数返回编码器信息
+ * @param payload_type 
+ * @return const char* 
+ */
 const char *ff_rtp_enc_name(int payload_type)
 {
     int i;
@@ -139,7 +162,13 @@ const char *ff_rtp_enc_name(int payload_type)
 
     return "";
 }
-
+/**
+ * @brief 
+ * 编码器的id
+ * @param buf 
+ * @param codec_type 
+ * @return enum AVCodecID 
+ */
 enum AVCodecID ff_rtp_codec_id(const char *buf, enum AVMediaType codec_type)
 {
     int i;
